@@ -13,19 +13,72 @@ const urlPrefix = "https//propelauth.com/"
 const backendUrlApiPrefix = "api/backend/v1/"
 
 type Client struct {
-	apiKey        string
-	queryHelper   QueryHelper
-	marshalHelper MarshalHelper
+	apiKey                    string
+	authUrl                   string
+	tokenVerificationMetadata TokenVerificationMetadata
+	queryHelper               QueryHelper
+	marshalHelper             MarshalHelper
+	validationHelper          ValidationHelper
 }
 
-func NewClient(apiKey string) *Client {
-	client := &Client{
-		apiKey:        apiKey,
-		queryHelper:   NewQueryHelper(urlPrefix, backendUrlApiPrefix),
-		marshalHelper: NewMarshalHelper(),
+func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *TokenVerificationMetadata) (*Client, error) {
+	// setup helpers
+	queryHelper := QueryHelper{urlPrefix: urlPrefix, backendUrlApiPrefix: backendUrlApiPrefix}
+	marshalHelper := MarshalHelper{}
+	validationHelper := ValidationHelper{}
+
+	// validate the authUrl
+	url, err := url.ParseRequestURI(authUrl)
+	if err != nil {
+		return nil, err
+	} else if url.Scheme != "https" {
+		return nil, fmt.Errorf("URL must start with https://")
+	} else if url.Path != "" {
+		return nil, fmt.Errorf("URL must not end with a trailing slash")
+	} else if url.Host == "" {
+		return nil, fmt.Errorf("Invalid URL")
 	}
 
-	return client
+	// if tokenVerificationMetadata wasn't passed in, create one
+	if tokenVerificationMetadata == nil {
+		endpointURL := "https://" + url.Host + "/api/v1/token_verification_metadata"
+
+		queryResponse, err := queryHelper.RequestHelper("GET", apiKey, endpointURL, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if queryResponse.StatusCode == 401 {
+			return nil, fmt.Errorf("apiKey is incorrect")
+		} else if queryResponse.StatusCode == 400 {
+			return nil, fmt.Errorf("Bad request: %s", queryResponse.ResponseText)
+		} else if queryResponse.StatusCode == 404 {
+			return nil, fmt.Errorf("URL is incorrect")
+		} else if queryResponse.StatusCode != 200 { // this must be last
+			return nil, fmt.Errorf("Unknown error when fetching token verification metadata")
+		}
+
+		authTokenVerificationMetadataResponse, err := marshalHelper.GetAuthTokenVerificationMetadataResponseFromBytes(queryResponse.BodyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		tokenVerificationMetadata = &TokenVerificationMetadata{
+			VerifierKey: authTokenVerificationMetadataResponse.PublicKeyPem,
+			Issuer:      authUrl,
+		}
+	}
+
+	client := &Client{
+		apiKey:                    apiKey,
+		authUrl:                   authUrl,
+		tokenVerificationMetadata: *tokenVerificationMetadata,
+		queryHelper:               queryHelper,
+		marshalHelper:             marshalHelper,
+		validationHelper:          validationHelper,
+	}
+
+	return client, nil
 }
 
 // public methods to fetch a user or users
@@ -631,12 +684,114 @@ func (o *Client) CreateMagicLink(params CreateMagicLinkParams) (*CreateMagicLink
 
 // public methods around authorization
 
-func (o *Client) ValidateAccessTokenAndGetUser(token string)                           {}
-func (o *Client) ValidateAccessTokenAndGetUserserWithOrg(token string)                 {}
-func (o *Client) ValidateAccessTokenAndGetUserserWithOrgByMinimumRole(token string)    {}
-func (o *Client) ValidateAccessTokenAndGetUserserWithOrgByExactRole(token string)      {}
-func (o *Client) ValidateAccessTokenAndGetUserserWithOrgByPermission(token string)     {}
-func (o *Client) ValidateAccessTokenAndGetUserserWithOrgByAllPermissions(token string) {}
+func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*UserFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (o *Client) ValidateAccessTokenAndGetUserWithOrg(authHeader string, orgId uuid.UUID) (*UserAndOrgMemberInfoFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+}
+
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader string, orgId uuid.UUID, minimumRole string) (*UserAndOrgMemberInfoFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user, orgId, minimumRole)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+}
+
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader string, orgId uuid.UUID, exactRole string) (*UserAndOrgMemberInfoFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user, orgId, exactRole)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+}
+
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader string, orgId uuid.UUID, permission string) (*UserAndOrgMemberInfoFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByPermission(user, orgId, permission)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+}
+
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader string, orgId uuid.UUID, permissions []string) (*UserAndOrgMemberInfoFromToken, error) {
+	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user, orgId, permissions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+}
 
 // private method to handle errors
 

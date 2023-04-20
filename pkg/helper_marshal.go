@@ -7,10 +7,6 @@ import (
 
 type MarshalHelper struct{}
 
-func NewMarshalHelper() MarshalHelper {
-	return MarshalHelper{}
-}
-
 func (o *MarshalHelper) GetUserFromBytes(bytes []byte) (*UserID, error) {
 	var user UserID
 	if err := json.Unmarshal(bytes, &user); err != nil {
@@ -65,4 +61,12 @@ func (o *MarshalHelper) GetMagicLinkResponseFromBytes(bytes []byte) (*CreateMagi
 		return nil, fmt.Errorf("Error on unmarshalling bytes to MagicLinkResponse`: %v", err)
 	}
 	return &magicLink, nil
+}
+
+func (o *MarshalHelper) GetAuthTokenVerificationMetadataResponseFromBytes(bytes []byte) (*AuthTokenVerificationMetadataResponse, error) {
+	var authTokenVerificationMetadataResponse AuthTokenVerificationMetadataResponse
+	if err := json.Unmarshal(bytes, &authTokenVerificationMetadataResponse); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to AuthTokenVerificationMetadataResponse`: %v", err)
+	}
+	return &authTokenVerificationMetadataResponse, nil
 }

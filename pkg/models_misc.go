@@ -16,9 +16,9 @@ type AccessTokenResponse struct {
 }
 
 type AccessTokenData struct {
-	AccessToken          string                   `json:"access_token"`
-	ExpiresAtSeconds     int64                    `json:"expires_at_seconds"`
-	OrgIdToOrgMemberInfo map[string]UserInOrgInfo `json:"org_id_to_org_member_info"`
-	User                 UserMetadata             `json:"user"`
-	ImpersonatorUser     User                     `json:"impersonator_user"`
+	AccessToken          string                            `json:"access_token"`
+	ExpiresAtSeconds     int64                             `json:"expires_at_seconds"`
+	OrgIdToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	User                 UserMetadata                      `json:"user"`
+	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
 }

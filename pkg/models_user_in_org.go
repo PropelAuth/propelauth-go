@@ -12,7 +12,7 @@ type UserInOrgQueryParams struct {
 	IncludeOrgs bool `json:"include_orgs"`
 }
 
-// update types
+// post types
 
 type AddUserToOrg struct {
 	UserID uuid.UUID `json:"user_id"`

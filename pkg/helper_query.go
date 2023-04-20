@@ -7,23 +7,9 @@ import (
 	"net/url"
 )
 
-type QueryHelper interface {
-	Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
-	Post(token string, urlPostfix string, queryParams url.Values, body []byte) (*QueryResponse, error)
-	Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
-}
-
-type queryHelper struct {
+type QueryHelper struct {
 	urlPrefix           string
 	backendUrlApiPrefix string
-}
-
-// initialize query helper
-func NewQueryHelper(urlPrefix string, backendUrlApiPrefix string) QueryHelper {
-	return queryHelper{
-		urlPrefix:           urlPrefix,
-		backendUrlApiPrefix: backendUrlApiPrefix,
-	}
 }
 
 // public http methods
@@ -34,24 +20,24 @@ type QueryResponse struct {
 	BodyBytes    []byte
 }
 
-func (o queryHelper) Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
+func (o *QueryHelper) Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
 	url := o.assembleUrl(urlPostfix, queryParams)
-	return o.requestHelper("GET", token, url, nil)
+	return o.RequestHelper("GET", token, url, nil)
 }
 
-func (o queryHelper) Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error) {
+func (o *QueryHelper) Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error) {
 	url := o.assembleUrl(urlPostfix, queryParams)
-	return o.requestHelper("POST", token, url, bodyParams)
+	return o.RequestHelper("POST", token, url, bodyParams)
 }
 
-func (o queryHelper) Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
+func (o *QueryHelper) Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
 	url := o.assembleUrl(urlPostfix, queryParams)
-	return o.requestHelper("DELETE", token, url, nil)
+	return o.RequestHelper("DELETE", token, url, nil)
 }
 
 // private helper methods
 
-func (o *queryHelper) assembleUrl(urlPostfix string, queryParams url.Values) string {
+func (o *QueryHelper) assembleUrl(urlPostfix string, queryParams url.Values) string {
 	url := o.urlPrefix + o.backendUrlApiPrefix + urlPostfix
 	if queryParams != nil {
 		url += "?" + queryParams.Encode()
@@ -59,7 +45,7 @@ func (o *queryHelper) assembleUrl(urlPostfix string, queryParams url.Values) str
 	return url
 }
 
-func (o *queryHelper) requestHelper(method string, token string, url string, body []byte) (*QueryResponse, error) {
+func (o *QueryHelper) RequestHelper(method string, token string, url string, body []byte) (*QueryResponse, error) {
 
 	requestBody := bytes.NewBuffer(body)
 

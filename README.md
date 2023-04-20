@@ -1,13 +1,11 @@
 todo:
 
-- write the ValidateAccessTokenAndGet* methods
-- write the (related) jwt library
-- add tests
+- fix access token decoding
 
 todo refactoring:
 
+- allow depedency injection with interfaces on the helpers, so the client has a QueryHelperInterface, which by default adds the QueryHelper, but a test could instead put in a TestQueryHelper that implements the QueryHelperInterface
 - rearrange the files into "models" "helpers" "jwt"
 - organize endpoint methods into "endpoints" dir?
 - test .github workflow
-- some of the endpoints take in a couple parameters, some take in a params struct, make sure when we do one or the other is consistent. specifically around FetchBatchUserMetadataBy*.
 - instal and run lint and fix recomendations
