@@ -67,6 +67,7 @@ func TestValidations(t *testing.T) {
 	t.Run("ValidateAccessTokenAndGetUser", func(t *testing.T) {
 		_, err := client.ValidateAccessTokenAndGetUser(authHeader)
 		if err != nil {
+			fmt.Println(authHeader)
 			t.Errorf("ValidateAccessTokenAndGetUser returned an error: %s", err)
 		}
 	})
@@ -152,11 +153,11 @@ func TestValidations(t *testing.T) {
 	})
 
 	t.Run("test basic validation fails With Expired Token", func(t *testing.T) {
-        // setup the expired token
-        accessToken := createExpiredAccessToken(user, private_key)
-        authHeader := fmt.Sprintf("Bearer %s", accessToken)
+		// setup the expired token
+		accessToken := createExpiredAccessToken(user, private_key)
+		authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
-        // run the test
+		// run the test
 		_, err := client.ValidateAccessTokenAndGetUser(authHeader)
 		if err == nil {
 			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about the token")
@@ -164,7 +165,7 @@ func TestValidations(t *testing.T) {
 	})
 
 	t.Run("test basic validation fails With Bad Issuer", func(t *testing.T) {
-        // setup the bad issuer
+		// setup the bad issuer
 		tokenVerificationMetadata := &TokenVerificationMetadata{
 			VerifierKey: public_key,
 			Issuer:      "newissuertestthatwontmatch",
@@ -176,7 +177,7 @@ func TestValidations(t *testing.T) {
 			return
 		}
 
-        // run the test
+		// run the test
 		_, err = client.ValidateAccessTokenAndGetUser(authHeader)
 		if err == nil {
 			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about issuer")
@@ -198,7 +199,7 @@ func TestValidations(t *testing.T) {
 			return
 		}
 
-        // run the test
+		// run the test
 		_, err = client.ValidateAccessTokenAndGetUser(authHeader)
 		if err == nil {
 			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about decoding the token")

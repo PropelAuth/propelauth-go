@@ -3,9 +3,6 @@ package client
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	//"crypto/x509"
-	//"encoding/pem"
-	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"time"
@@ -56,11 +53,10 @@ func createAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey) string
 		panic("createAccessToken: error signing token: " + err.Error())
 	}
 
-	fmt.Println("createAccessToken result: " + tokenString)
 	return tokenString
 }
 
-// Create a JWT access token with the UserFromToken data.
+// Create an expired JWT access token with the UserFromToken data.
 func createExpiredAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey) string {
 	user.RegisteredClaims = jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(-24 * time.Hour)),
@@ -75,7 +71,6 @@ func createExpiredAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey)
 		panic("createExpiredAccessToken: error signing token: " + err.Error())
 	}
 
-	fmt.Println("createExpiredAccessToken result: " + tokenString)
 	return tokenString
 }
 

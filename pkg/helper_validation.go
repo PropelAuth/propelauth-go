@@ -1,6 +1,9 @@
 package client
 
 import (
+	//"crypto/rsa"
+	//"crypto/x509"
+	//"encoding/pem"
 	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -18,8 +21,7 @@ func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tok
 			return nil, fmt.Errorf("Error decoding JWT: Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		//verifierBytes := []byte(tokenVerificationMetadata.VerifierKey)
-		return tokenVerificationMetadata.VerifierKey, nil
+		return &tokenVerificationMetadata.VerifierKey, nil
 	})
 
 	// friendly error messages
