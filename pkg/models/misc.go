@@ -1,4 +1,4 @@
-package client
+package models
 
 type CreateMagicLinkParams struct {
 	Email                         string `json:"email"`

@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"net/url"
+
+	"github.com/propelauth/propelauth-go/pkg/models"
+	"github.com/propelauth/propelauth-go/pkg/helpers"
 )
 
 const urlPrefix = "https//propelauth.com/"
@@ -15,17 +18,17 @@ const backendUrlApiPrefix = "api/backend/v1/"
 type Client struct {
 	apiKey                    string
 	authUrl                   string
-	tokenVerificationMetadata TokenVerificationMetadata
-	queryHelper               QueryHelper
-	marshalHelper             MarshalHelper
-	validationHelper          ValidationHelper
+	tokenVerificationMetadata models.TokenVerificationMetadata
+	queryHelper               helpers.QueryHelperInterface
+	marshalHelper             helpers.MarshalHelperInterface
+	validationHelper          helpers.ValidationHelperInterface
 }
 
-func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *TokenVerificationMetadata) (*Client, error) {
+func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
 	// setup helpers
-	queryHelper := QueryHelper{urlPrefix: urlPrefix, backendUrlApiPrefix: backendUrlApiPrefix}
-	marshalHelper := MarshalHelper{}
-	validationHelper := ValidationHelper{}
+	queryHelper := helpers.NewQueryHelper(urlPrefix, backendUrlApiPrefix)
+	marshalHelper := &helpers.MarshalHelper{}
+	validationHelper := &helpers.ValidationHelper{}
 
 	// validate the authUrl
 	url, err := url.ParseRequestURI(authUrl)
@@ -63,7 +66,7 @@ func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *TokenVe
 			return nil, err
 		}
 
-		tokenVerificationMetadata = &TokenVerificationMetadata{
+		tokenVerificationMetadata = &models.TokenVerificationMetadata{
 			VerifierKey: authTokenVerificationMetadataResponse.PublicKeyPem,
 			Issuer:      authUrl,
 		}
@@ -83,7 +86,7 @@ func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *TokenVe
 
 // public methods to fetch a user or users
 
-func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (*UserMetadata, error) {
+func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := fmt.Sprintf("user/%s", userId)
 
 	queryParams := url.Values{
@@ -107,7 +110,7 @@ func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (
 	return user, nil
 }
 
-func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*UserMetadata, error) {
+func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := "user/email"
 
 	queryParams := url.Values{
@@ -132,7 +135,7 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*User
 	return user, nil
 }
 
-func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) (*UserMetadata, error) {
+func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := "user/username"
 
 	queryParams := url.Values{
@@ -158,7 +161,7 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 }
 
-func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*UserList, error) {
+func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/user_ids"
 
 	// assemble the parameters
@@ -196,7 +199,7 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 	return users, nil
 }
 
-func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*UserList, error) {
+func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/emails"
 
 	// assemble the parameters
@@ -233,7 +236,7 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 	return users, nil
 }
 
-func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*UserList, error) {
+func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/usernames"
 
 	// assemble the parameters
@@ -274,7 +277,7 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 	return users, nil
 }
 
-func (o *Client) FetchUsersByQuery(params UserQueryParams) (*UserList, error) {
+func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error) {
 	urlPostfix := "user/query"
 
 	bodyJson, err := json.Marshal(params)
@@ -301,7 +304,7 @@ func (o *Client) FetchUsersByQuery(params UserQueryParams) (*UserList, error) {
 
 // public methods to modify a user
 
-func (o *Client) CreateUser(params CreateUserParams) (*UserID, error) {
+func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, error) {
 	urlPostfix := "user"
 
 	bodyJson, err := json.Marshal(params)
@@ -326,7 +329,7 @@ func (o *Client) CreateUser(params CreateUserParams) (*UserID, error) {
 	return user, nil
 }
 
-func (o *Client) UpdateUserEmail(user_id uuid.UUID, params UpdateEmail) (bool, error) {
+func (o *Client) UpdateUserEmail(user_id uuid.UUID, params models.UpdateEmail) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/email", user_id)
 
 	bodyJson, err := json.Marshal(params)
@@ -346,7 +349,7 @@ func (o *Client) UpdateUserEmail(user_id uuid.UUID, params UpdateEmail) (bool, e
 	return true, nil
 }
 
-func (o *Client) UpdateUserMetadata(userId uuid.UUID, params UpdateUserMetadata) (bool, error) {
+func (o *Client) UpdateUserMetadata(userId uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/metadata", userId)
 
 	bodyJson, err := json.Marshal(params)
@@ -366,7 +369,7 @@ func (o *Client) UpdateUserMetadata(userId uuid.UUID, params UpdateUserMetadata)
 	return true, nil
 }
 
-func (o *Client) UpdateUserPassword(userId uuid.UUID, params UpdateUserPasswordParam) (bool, error) {
+func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPasswordParam) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/password", userId)
 
 	bodyJson, err := json.Marshal(params)
@@ -386,7 +389,7 @@ func (o *Client) UpdateUserPassword(userId uuid.UUID, params UpdateUserPasswordP
 	return true, nil
 }
 
-func (o *Client) MigrateUserFromExternalSource(params MigrateUserParams) (bool, error) {
+func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error) {
 	urlPostfix := "migrate_user"
 
 	bodyJson, err := json.Marshal(params)
@@ -453,7 +456,7 @@ func (o *Client) EnableUser(userId uuid.UUID) (bool, error) {
 
 // public methods for users in orgs
 
-func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params UserInOrgQueryParams) (*UserList, error) {
+func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error) {
 	urlPostfix := fmt.Sprintf("user/org/%s", orgId)
 
 	bodyJson, err := json.Marshal(params)
@@ -478,7 +481,7 @@ func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params UserInOrgQueryParams) (
 	return users, nil
 }
 
-func (o *Client) AddUserToOrg(params AddUserToOrg) (bool, error) {
+func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 	urlPostfix := "org/add_user"
 
 	bodyJson, err := json.Marshal(params)
@@ -500,7 +503,7 @@ func (o *Client) AddUserToOrg(params AddUserToOrg) (bool, error) {
 
 // public methods for orgs
 
-func (o *Client) FetchOrg(orgId uuid.UUID) (*OrgMetadata, error) {
+func (o *Client) FetchOrg(orgId uuid.UUID) (*models.OrgMetadata, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgId)
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, nil)
@@ -520,7 +523,7 @@ func (o *Client) FetchOrg(orgId uuid.UUID) (*OrgMetadata, error) {
 	return org, nil
 }
 
-func (o *Client) FetchOrgByQuery(params OrgQueryParams) (*OrgList, error) {
+func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error) {
 	urlPostfix := "org/query"
 
 	bodyJson, err := json.Marshal(params)
@@ -545,7 +548,7 @@ func (o *Client) FetchOrgByQuery(params OrgQueryParams) (*OrgList, error) {
 	return orgs, nil
 }
 
-func (o *Client) CreateOrg(name string) (*OrgMetadata, error) {
+func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	urlPostfix := "org"
 
 	type CreateOrg struct {
@@ -610,7 +613,7 @@ func (o *Client) DisallowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error)
 
 // public methods for misc functionality
 
-func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*AccessToken, error) {
+func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*models.AccessToken, error) {
 	urlPostfix := "access_token"
 
 	// assemble body params
@@ -657,7 +660,7 @@ func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*Ac
 	return accessToken, nil
 }
 
-func (o *Client) CreateMagicLink(params CreateMagicLinkParams) (*CreateMagicLinkResponse, error) {
+func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.CreateMagicLinkResponse, error) {
 	urlPostfix := "magic_link"
 
 	bodyJson, err := json.Marshal(params)
@@ -684,7 +687,7 @@ func (o *Client) CreateMagicLink(params CreateMagicLinkParams) (*CreateMagicLink
 
 // public methods around authorization
 
-func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*UserFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*models.UserFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -698,7 +701,7 @@ func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*UserFromToke
 	return user, nil
 }
 
-func (o *Client) ValidateAccessTokenAndGetUserWithOrg(authHeader string, orgId uuid.UUID) (*UserAndOrgMemberInfoFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUserWithOrg(authHeader string, orgId uuid.UUID) (*models.UserAndOrgMemberInfoFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -714,10 +717,10 @@ func (o *Client) ValidateAccessTokenAndGetUserWithOrg(authHeader string, orgId u
 		return nil, err
 	}
 
-	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader string, orgId uuid.UUID, minimumRole string) (*UserAndOrgMemberInfoFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader string, orgId uuid.UUID, minimumRole string) (*models.UserAndOrgMemberInfoFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -733,10 +736,10 @@ func (o *Client) ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader st
 		return nil, err
 	}
 
-	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader string, orgId uuid.UUID, exactRole string) (*UserAndOrgMemberInfoFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader string, orgId uuid.UUID, exactRole string) (*models.UserAndOrgMemberInfoFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -752,10 +755,10 @@ func (o *Client) ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader stri
 		return nil, err
 	}
 
-	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader string, orgId uuid.UUID, permission string) (*UserAndOrgMemberInfoFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader string, orgId uuid.UUID, permission string) (*models.UserAndOrgMemberInfoFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -771,10 +774,10 @@ func (o *Client) ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader str
 		return nil, err
 	}
 
-	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader string, orgId uuid.UUID, permissions []string) (*UserAndOrgMemberInfoFromToken, error) {
+func (o *Client) ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader string, orgId uuid.UUID, permissions []string) (*models.UserAndOrgMemberInfoFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -790,12 +793,12 @@ func (o *Client) ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader
 		return nil, err
 	}
 
-	return &UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
+	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
 // private method to handle errors
 
-func (o *Client) returnErrorMessageIfNotOk(queryResponse *QueryResponse) error {
+func (o *Client) returnErrorMessageIfNotOk(queryResponse *helpers.QueryResponse) error {
 	if queryResponse.StatusCode == 401 {
 		return fmt.Errorf("API Key is incorrect")
 	} else if queryResponse.StatusCode == 400 {

@@ -1,4 +1,4 @@
-package client
+package helpers
 
 import (
 	"bytes"
@@ -7,18 +7,33 @@ import (
 	"net/url"
 )
 
-type QueryHelper struct {
-	urlPrefix           string
-	backendUrlApiPrefix string
-}
-
-// public http methods
-
+// Queryresponse is the common return type for the HTTP methods below. It structures the normal HTTP response in a way that's convient for us.
 type QueryResponse struct {
 	StatusCode   int
 	ResponseText string
 	BodyBytes    []byte
 }
+
+// interface for the QueryHelper
+type QueryHelperInterface interface {
+	Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
+	Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
+	Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
+}
+
+type QueryHelper struct {
+	urlPrefix           string
+	backendUrlApiPrefix string
+}
+
+func NewQueryHelper(urlPrefix string, backendUrlApiPrefix string) *QueryHelper {
+	return &QueryHelper{
+		urlPrefix:           urlPrefix,
+		backendUrlApiPrefix: backendUrlApiPrefix,
+	}
+}
+
+// public http methods
 
 func (o *QueryHelper) Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
 	url := o.assembleUrl(urlPostfix, queryParams)
@@ -35,15 +50,7 @@ func (o *QueryHelper) Delete(token string, urlPostfix string, queryParams url.Va
 	return o.RequestHelper("DELETE", token, url, nil)
 }
 
-// private helper methods
-
-func (o *QueryHelper) assembleUrl(urlPostfix string, queryParams url.Values) string {
-	url := o.urlPrefix + o.backendUrlApiPrefix + urlPostfix
-	if queryParams != nil {
-		url += "?" + queryParams.Encode()
-	}
-	return url
-}
+// public helper method
 
 func (o *QueryHelper) RequestHelper(method string, token string, url string, body []byte) (*QueryResponse, error) {
 
@@ -80,4 +87,14 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 	}
 
 	return &queryResponse, nil
+}
+
+// private helper methods
+
+func (o *QueryHelper) assembleUrl(urlPostfix string, queryParams url.Values) string {
+	url := o.urlPrefix + o.backendUrlApiPrefix + urlPostfix
+	if queryParams != nil {
+		url += "?" + queryParams.Encode()
+	}
+	return url
 }

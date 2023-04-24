@@ -1,4 +1,4 @@
-package client
+package test
 
 import (
 	"crypto/rand"
@@ -6,20 +6,21 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"time"
+	"github.com/propelauth/propelauth-go/pkg/models"
 )
 
-func randomUserID() uuid.UUID {
+func RandomUserID() uuid.UUID {
 	return uuid.New()
 }
 
-func randomOrgID() uuid.UUID {
+func RandomOrgID() uuid.UUID {
 	return uuid.New()
 }
 
 // Represents the incoming JSON from the auth server.
-func randomOrg(userRole string, permissions []string) OrgMemberInfoFromToken {
-	return OrgMemberInfoFromToken{
-		OrgId:                             randomOrgID(),
+func RandomOrg(userRole string, permissions []string) models.OrgMemberInfoFromToken {
+	return models.OrgMemberInfoFromToken{
+		OrgId:                             RandomOrgID(),
 		OrgName:                           "orgname",
 		OrgMetadata:                       map[string]interface{}{},
 		UserAssignedRole:                  userRole,
@@ -28,9 +29,9 @@ func randomOrg(userRole string, permissions []string) OrgMemberInfoFromToken {
 	}
 }
 
-// Convert alist of orgs to a map of org_id to org, which is used in UserFromToken.
-func orgsToOrgIdMap(orgs []OrgMemberInfoFromToken) map[string]*OrgMemberInfoFromToken {
-	orgIdToOrgMemberInfo := make(map[string]*OrgMemberInfoFromToken)
+// Convert a list of orgs to a map of org_id to org, which is used in UserFromToken.
+func OrgsToOrgIdMap(orgs []models.OrgMemberInfoFromToken) map[string]*models.OrgMemberInfoFromToken {
+	orgIdToOrgMemberInfo := make(map[string]*models.OrgMemberInfoFromToken)
 	for _, org := range orgs {
 		uuidAsString := org.OrgId.String()
 		orgIdToOrgMemberInfo[uuidAsString] = &org
@@ -39,7 +40,7 @@ func orgsToOrgIdMap(orgs []OrgMemberInfoFromToken) map[string]*OrgMemberInfoFrom
 }
 
 // Create a JWT access token with the UserFromToken data.
-func createAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey) string {
+func CreateAccessToken(user models.UserFromToken, privateKeyPem *rsa.PrivateKey) string {
 	user.RegisteredClaims = jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -57,7 +58,7 @@ func createAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey) string
 }
 
 // Create an expired JWT access token with the UserFromToken data.
-func createExpiredAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey) string {
+func CreateExpiredAccessToken(user models.UserFromToken, privateKeyPem *rsa.PrivateKey) string {
 	user.RegisteredClaims = jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(-24 * time.Hour)),
 		IssuedAt:  jwt.NewNumericDate(time.Now().Add(-25 * time.Hour)),
@@ -75,7 +76,7 @@ func createExpiredAccessToken(user UserFromToken, privateKeyPem *rsa.PrivateKey)
 }
 
 // Generate an RSA key pair.
-func generateRSAKeys() (*rsa.PrivateKey, rsa.PublicKey) {
+func GenerateRSAKeys() (*rsa.PrivateKey, rsa.PublicKey) {
 	private_key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)

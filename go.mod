@@ -1,4 +1,4 @@
-module propelauth-go
+module github.com/propelauth/propelauth-go
 
 go 1.20
 

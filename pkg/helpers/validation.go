@@ -1,20 +1,28 @@
-package client
+package helpers
 
 import (
-	//"crypto/rsa"
-	//"crypto/x509"
-	//"encoding/pem"
 	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"strings"
+	"github.com/propelauth/propelauth-go/pkg/models"
 )
+
+type ValidationHelperInterface interface {
+	ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error)
+	ExtractTokenFromAuthorizationHeader(authHeader string) (string, error)
+	ValidateOrgAccessAndGetOrgMemberInfo(user *models.UserFromToken, orgId uuid.UUID) (*models.OrgMemberInfoFromToken, error)
+	ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user *models.UserFromToken, orgId uuid.UUID, minimumRole string) (*models.OrgMemberInfoFromToken, error)
+	ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user *models.UserFromToken, orgId uuid.UUID, exactRole string) (*models.OrgMemberInfoFromToken, error)
+	ValidateOrgAccessAndGetOrgMemberInfoByPermission(user *models.UserFromToken, orgId uuid.UUID, permission string) (*models.OrgMemberInfoFromToken, error)
+	ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user *models.UserFromToken, orgId uuid.UUID, permissions []string) (*models.OrgMemberInfoFromToken, error)
+}
 
 type ValidationHelper struct{}
 
-func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata TokenVerificationMetadata) (*UserFromToken, error) {
+func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error) {
 
-	claims := &UserFromToken{}
+	claims := &models.UserFromToken{}
 
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -55,7 +63,7 @@ func (o *ValidationHelper) ExtractTokenFromAuthorizationHeader(authHeader string
 	return split[1], nil
 }
 
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfo(user *UserFromToken, orgId uuid.UUID) (*OrgMemberInfoFromToken, error) {
+func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfo(user *models.UserFromToken, orgId uuid.UUID) (*models.OrgMemberInfoFromToken, error) {
 	if user.OrgIdToOrgMemberInfo == nil {
 		return nil, fmt.Errorf("User does not have access to any organizations")
 	}
@@ -69,7 +77,7 @@ func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfo(user *UserFromTo
 	return orgMemberInfo, nil
 }
 
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user *UserFromToken, orgId uuid.UUID, minimumRole string) (*OrgMemberInfoFromToken, error) {
+func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user *models.UserFromToken, orgId uuid.UUID, minimumRole string) (*models.OrgMemberInfoFromToken, error) {
 	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
 	if err != nil {
 		return nil, err
@@ -82,7 +90,7 @@ func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(use
 	return orgMemberInfo, nil
 }
 
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user *UserFromToken, orgId uuid.UUID, exactRole string) (*OrgMemberInfoFromToken, error) {
+func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user *models.UserFromToken, orgId uuid.UUID, exactRole string) (*models.OrgMemberInfoFromToken, error) {
 	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
 	if err != nil {
 		return nil, err
@@ -95,7 +103,7 @@ func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user 
 	return orgMemberInfo, nil
 }
 
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByPermission(user *UserFromToken, orgId uuid.UUID, permission string) (*OrgMemberInfoFromToken, error) {
+func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByPermission(user *models.UserFromToken, orgId uuid.UUID, permission string) (*models.OrgMemberInfoFromToken, error) {
 	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
 	if err != nil {
 		return nil, err
@@ -108,7 +116,7 @@ func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByPermission(user
 	return orgMemberInfo, nil
 }
 
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user *UserFromToken, orgId uuid.UUID, permissions []string) (*OrgMemberInfoFromToken, error) {
+func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user *models.UserFromToken, orgId uuid.UUID, permissions []string) (*models.OrgMemberInfoFromToken, error) {
 	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
 	if err != nil {
 		return nil, err

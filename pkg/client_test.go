@@ -3,14 +3,16 @@ package client
 import (
 	"fmt"
 	"testing"
+	"github.com/propelauth/propelauth-go/pkg/models"
+	testHelpers "github.com/propelauth/propelauth-go/pkg/test"
 )
 
 func TestInitializations(t *testing.T) {
 	// setup common test data
 
-	_, public_key := generateRSAKeys()
+	_, public_key := testHelpers.GenerateRSAKeys()
 
-	tokenVerificationMetadata := &TokenVerificationMetadata{
+	tokenVerificationMetadata := &models.TokenVerificationMetadata{
 		VerifierKey: public_key,
 		Issuer:      "issuertest",
 	}
@@ -23,6 +25,7 @@ func TestInitializations(t *testing.T) {
 			t.Errorf("NewClient should have returned an error, but did not")
 		}
 	})
+
 	t.Run("test init with http and not https fails", func(t *testing.T) {
 		_, err := NewClient("http://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err == nil {
@@ -35,23 +38,23 @@ func TestInitializations(t *testing.T) {
 func TestValidations(t *testing.T) {
 	// setup common test data
 
-	private_key, public_key := generateRSAKeys()
+	private_key, public_key := testHelpers.GenerateRSAKeys()
 
-	userId := randomUserID()
-	org := randomOrg("Admin", nil)
+	userId := testHelpers.RandomUserID()
+	org := testHelpers.RandomOrg("Admin", nil)
 	org.UserInheritedRolesPlusCurrentRole = []string{"Admin", "Member"}
 	org.UserPermissions = []string{"Read", "Write"}
-	orgIdToOrgMemberInfo := orgsToOrgIdMap([]OrgMemberInfoFromToken{org})
-	user := UserFromToken{
+	orgIdToOrgMemberInfo := testHelpers.OrgsToOrgIdMap([]models.OrgMemberInfoFromToken{org})
+	user := models.UserFromToken{
 		UserId:               userId,
 		OrgIdToOrgMemberInfo: orgIdToOrgMemberInfo,
 	}
 
-	accessToken := createAccessToken(user, private_key)
+	accessToken := testHelpers.CreateAccessToken(user, private_key)
 
 	authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
-	tokenVerificationMetadata := &TokenVerificationMetadata{
+	tokenVerificationMetadata := &models.TokenVerificationMetadata{
 		VerifierKey: public_key,
 		Issuer:      "issuertest",
 	}
@@ -154,7 +157,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Expired Token", func(t *testing.T) {
 		// setup the expired token
-		accessToken := createExpiredAccessToken(user, private_key)
+		accessToken := testHelpers.CreateExpiredAccessToken(user, private_key)
 		authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
 		// run the test
@@ -166,7 +169,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Bad Issuer", func(t *testing.T) {
 		// setup the bad issuer
-		tokenVerificationMetadata := &TokenVerificationMetadata{
+		tokenVerificationMetadata := &models.TokenVerificationMetadata{
 			VerifierKey: public_key,
 			Issuer:      "newissuertestthatwontmatch",
 		}
@@ -186,9 +189,9 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Wrong Key", func(t *testing.T) {
 		// generate a client with new random keys
-		_, public_key := generateRSAKeys()
+		_, public_key := testHelpers.GenerateRSAKeys()
 
-		tokenVerificationMetadata := &TokenVerificationMetadata{
+		tokenVerificationMetadata := &models.TokenVerificationMetadata{
 			VerifierKey: public_key,
 			Issuer:      "issuertest",
 		}
