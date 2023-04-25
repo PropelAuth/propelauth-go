@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
-	"testing"
 	"github.com/propelauth/propelauth-go/pkg/models"
 	testHelpers "github.com/propelauth/propelauth-go/pkg/test"
+	"testing"
 )
 
 func TestInitializations(t *testing.T) {

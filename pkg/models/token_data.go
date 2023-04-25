@@ -6,8 +6,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// access token
+
 type AccessToken struct {
-	access_token string `json:"access_token"`
+	AccessToken string `json:"access_token"`
+}
+
+type AccessTokenResponse struct {
+	AccessToken AccessTokenData `json:"access_token"`
+}
+
+type AccessTokenData struct {
+	AccessToken          string                            `json:"access_token"`
+	ExpiresAtSeconds     int64                             `json:"expires_at_seconds"`
+	OrgIdToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	User                 UserMetadata                      `json:"user"`
+	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
 }
 
 // models used when initializing the client
@@ -51,10 +65,7 @@ type OrgMemberInfoFromToken struct {
 }
 
 func (o *OrgMemberInfoFromToken) VerifyExactRole(exactRole string) bool {
-	if exactRole == o.UserAssignedRole {
-		return true
-	}
-	return false
+	return exactRole == o.UserAssignedRole
 }
 
 func (o *OrgMemberInfoFromToken) VerifyMinimumRole(minimumRoles string) bool {

@@ -5,8 +5,8 @@ import (
 	"crypto/rsa"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"time"
 	"github.com/propelauth/propelauth-go/pkg/models"
+	"time"
 )
 
 func RandomUserID() uuid.UUID {

@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"net/url"
 
-	"github.com/propelauth/propelauth-go/pkg/models"
 	"github.com/propelauth/propelauth-go/pkg/helpers"
+	"github.com/propelauth/propelauth-go/pkg/models"
 )
 
 const urlPrefix = "https//propelauth.com/"
@@ -179,6 +179,9 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 	}
 
 	bodyJson, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, err
+	}
 
 	// make the request
 
@@ -216,6 +219,9 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 	}
 
 	bodyJson, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, err
+	}
 
 	// make the request
 
@@ -551,6 +557,8 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	urlPostfix := "org"
 
+	// assemble the parameters
+
 	type CreateOrg struct {
 		Name string `json:"name"`
 	}
@@ -563,6 +571,8 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// make the request
 
 	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
 	if err != nil {

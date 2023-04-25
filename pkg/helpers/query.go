@@ -76,7 +76,11 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 
 	// convert the response body to a stream of bytes
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Error on reading response body: %v", err)
+	}
+
 	respBytes := buf.Bytes()
 
 	// return the response
