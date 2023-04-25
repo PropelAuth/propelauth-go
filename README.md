@@ -7,7 +7,7 @@
 </p>
 
 
-A go library for managing authentication, backed by [PropelAuth](https://www.propelauth.com/?utm_campaign=github-go). 
+A Go library for managing authentication, backed by [PropelAuth](https://www.propelauth.com/?utm_campaign=github-go). 
 
 [PropelAuth](https://www.propelauth.com?ref=github) makes it easy to add authentication and authorization to your B2B/multi-tenant application.
 
@@ -15,22 +15,28 @@ Your frontend gets a beautiful, safe, and customizable login screen. Your backen
 
 ## Documentation
 
-- [Full reference this library.](https://docs.propelauth.com/reference/backend-apis/go)
-- [Getting started guides for PropelAuth.](https://docs.propelauth.com/)
+- [Full reference for this library (coming soon)](https://docs.propelauth.com/reference/backend-apis/go)
+- [Getting started guides for PropelAuth](https://docs.propelauth.com/)
 
-## Installation
+## Creating your first program with the PropelAuth Go SDK
+
+### Initial Steps
+
+1. Sign up for a free account at [Propelauth](https://auth.propelauth.com).
+2. Create a new project.
+3. Go to the **Backend Integrations** section in the dashboard and note the Auth URL and API Key.
+
+
+### Install the PropelAuth Go SDK
+
+Make sure you have Go version 1.20.
 
 ```sh
 go get github.com/propelauth/propelauth-go-sdk
 ```
 
-## SDk Usage Requirements
+### Your sample program
 
-1. Sign up for a free account at [Propelauth](https://propelauth.com).
-2. Create a new application.
-3. Note the Auth URL and API Key on the Backend Integrations section on your dashboard.
-
-## Sample Program
 
 ```go
 package main
@@ -77,8 +83,9 @@ func main() {
 
 ## License
 
-The PropelAuth Go SDK is released under the [MIT license](LICENSE.md).
+The PropelAuth Go SDK is released under the [MIT license](LICENSE).
 
 ## Questions?
 
 Feel free to reach out at support@propelauth.com
+
