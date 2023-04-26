@@ -52,7 +52,7 @@ func main() {
     apiKey := os.Getenv("PROPELAUTH_API_KEY")
     authUrl := os.Getenv("PROPELAUTH_AUTH_URL")
     
-	client, err := NewClient(authUrl, apiKey, nil)
+	client, err := InitBaseAuth(authUrl, apiKey, nil)
 	if err != nil {
 		panic(err)
 	}

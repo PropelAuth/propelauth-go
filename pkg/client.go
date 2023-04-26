@@ -24,9 +24,9 @@ type Client struct {
 	validationHelper          helpers.ValidationHelperInterface
 }
 
-func NewClient(authUrl string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
+func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
 	// setup helpers
-	queryHelper := helpers.NewQueryHelper(urlPrefix, backendUrlApiPrefix)
+	queryHelper := helpers.NewQueryHelper(authUrl, backendUrlApiPrefix)
 	marshalHelper := &helpers.MarshalHelper{}
 	validationHelper := &helpers.ValidationHelper{}
 
