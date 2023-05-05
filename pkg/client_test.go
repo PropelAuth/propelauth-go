@@ -20,14 +20,14 @@ func TestInitializations(t *testing.T) {
 	// test initialization
 
 	t.Run("test init with trailing slash fails", func(t *testing.T) {
-		_, err := NewClient("https://auth.example.com/", "apikey", tokenVerificationMetadata)
+		_, err := InitBaseAuth("https://auth.example.com/", "apikey", tokenVerificationMetadata)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error, but did not")
 		}
 	})
 
 	t.Run("test init with http and not https fails", func(t *testing.T) {
-		_, err := NewClient("http://auth.example.com", "apikey", tokenVerificationMetadata)
+		_, err := InitBaseAuth("http://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error about https, but did not")
 		}
@@ -59,7 +59,7 @@ func TestValidations(t *testing.T) {
 		Issuer:      "issuertest",
 	}
 
-	client, err := NewClient("https://auth.example.com", "apikey", tokenVerificationMetadata)
+	client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 	if err != nil {
 		t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
 		return
@@ -174,7 +174,7 @@ func TestValidations(t *testing.T) {
 			Issuer:      "newissuertestthatwontmatch",
 		}
 
-		client, err := NewClient("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot continue this test: %s", err)
 			return
@@ -196,7 +196,7 @@ func TestValidations(t *testing.T) {
 			Issuer:      "issuertest",
 		}
 
-		client, err := NewClient("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
 			return
