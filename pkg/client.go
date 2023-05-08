@@ -697,7 +697,7 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 
 // public methods around authorization
 
-func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*models.UserFromToken, error) {
+func (o *Client) GetUser(authHeader string) (*models.UserFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
 		return nil, err
@@ -709,101 +709,6 @@ func (o *Client) ValidateAccessTokenAndGetUser(authHeader string) (*models.UserF
 	}
 
 	return user, nil
-}
-
-func (o *Client) ValidateAccessTokenAndGetUserWithOrg(authHeader string, orgId uuid.UUID) (*models.UserAndOrgMemberInfoFromToken, error) {
-	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
-}
-
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader string, orgId uuid.UUID, minimumRole string) (*models.UserAndOrgMemberInfoFromToken, error) {
-	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user, orgId, minimumRole)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
-}
-
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader string, orgId uuid.UUID, exactRole string) (*models.UserAndOrgMemberInfoFromToken, error) {
-	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user, orgId, exactRole)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
-}
-
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader string, orgId uuid.UUID, permission string) (*models.UserAndOrgMemberInfoFromToken, error) {
-	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByPermission(user, orgId, permission)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
-}
-
-func (o *Client) ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader string, orgId uuid.UUID, permissions []string) (*models.UserAndOrgMemberInfoFromToken, error) {
-	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
-	if err != nil {
-		return nil, err
-	}
-
-	orgMemberInfo, err := o.validationHelper.ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user, orgId, permissions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.UserAndOrgMemberInfoFromToken{User: *user, OrgMemberInfo: *orgMemberInfo}, nil
 }
 
 // private method to handle errors

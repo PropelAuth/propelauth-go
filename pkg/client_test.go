@@ -67,91 +67,166 @@ func TestValidations(t *testing.T) {
 
 	// test valid access token with different user requirements
 
-	t.Run("ValidateAccessTokenAndGetUser", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUser(authHeader)
+	t.Run("GetUser", func(t *testing.T) {
+		_, err := client.GetUser(authHeader)
 		if err != nil {
 			fmt.Println(authHeader)
-			t.Errorf("ValidateAccessTokenAndGetUser returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
 		}
 	})
 
 	t.Run("ValidateAccessTokenAndGetUserWithOrg", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUserWithOrg(authHeader, org.OrgId)
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
 		if err != nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrg returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		// run tests
+		
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
 	})
 
-	t.Run("ValidateAccessTokenAndGetUserWithOrgByMinimumRole", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader, org.OrgId, "Member")
+	t.Run("IsAtLeastRole", func(t *testing.T) {
+		// setup tests
+		
+		user, err := client.GetUser(authHeader)
 		if err != nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByMinimumRole for Member returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		_, err = client.ValidateAccessTokenAndGetUserWithOrgByMinimumRole(authHeader, org.OrgId, "Owner")
-		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByMinimumRole for Owner should have returned an error.")
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+		
+		result := orgMemberInfo.IsAtLeastRole("Member")
+		if !result {
+			t.Errorf("IsAtLeastRole with Member should have returned true")
+		}
+
+		result = orgMemberInfo.IsAtLeastRole("Admin")
+		if !result {
+			t.Errorf("IsAtLeastRole with Admin should have returned true")
+		}
+
+		result = orgMemberInfo.IsAtLeastRole("Owner")
+		if result {
+			t.Errorf("IsAtLeastRole with Owner should have returned false")
 		}
 	})
 
-	t.Run("ValidateAccessTokenAndGetUserWithOrgByExactRole", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader, org.OrgId, "Admin")
+	t.Run("IsRole", func(t *testing.T) {
+		// setup tests
+		
+		user, err := client.GetUser(authHeader)
 		if err != nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByExactRole for Admin returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		_, err = client.ValidateAccessTokenAndGetUserWithOrgByExactRole(authHeader, org.OrgId, "Member")
-		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByExactRole for Member returned an error.")
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+
+		result := orgMemberInfo.IsRole("Member")
+		if result {
+			t.Errorf("IsRole with Member should have returned false")
+		}
+
+		result = orgMemberInfo.IsRole("Admin")
+		if !result {
+			t.Errorf("IsRole with Admin should have returned true")
+		}
+
+		result = orgMemberInfo.IsRole("Owner")
+		if result {
+			t.Errorf("IsRole with Owner should have returned false")
 		}
 	})
 
-	t.Run("ValidateAccessTokenAndGetUserWithOrgByPermission", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader, org.OrgId, "Read")
+	t.Run("HasPermission", func(t *testing.T) {
+		// setup tests
+		
+		user, err := client.GetUser(authHeader)
 		if err != nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByPermission for Read returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		_, err = client.ValidateAccessTokenAndGetUserWithOrgByPermission(authHeader, org.OrgId, "Delete")
-		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByPermission for Delete should have returned an error")
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+
+		result := orgMemberInfo.HasPermission("Read")
+		if !result {
+			t.Errorf("HasPermission with Read should have returned true")
+		}
+
+		result = orgMemberInfo.HasPermission("Edit")
+		if result {
+			t.Errorf("HasPermission with Edit should have returned false")
 		}
 	})
 
-	t.Run("ValidateAccessTokenAndGetUserWithOrgByAllPermissions", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader, org.OrgId, []string{"Read", "Write"})
+	t.Run("HasAllPermissions", func(t *testing.T) {
+		// setup tests
+		
+		user, err := client.GetUser(authHeader)
 		if err != nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByAllPermissions for Read/Write returned an error: %s", err)
+			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		_, err = client.ValidateAccessTokenAndGetUserWithOrgByAllPermissions(authHeader, org.OrgId, []string{"Read", "Write", "Delete"})
-		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUserWithOrgByAllPermissions for Read/Write/Delete should have returned an error")
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+		
+		result := orgMemberInfo.HasAllPermissions([]string{"Read", "Write"})
+		if !result {
+			t.Errorf("HasPermission with Read/Write should have returned true")
+		}
+
+		result = orgMemberInfo.HasAllPermissions([]string{"Read", "Write", "Delete"})
+		if result {
+			t.Errorf("HasPermission with Read/Write/Delete should have returned false")
 		}
 	})
 
-	// test bad headesr and bad access tokens
+	// test bad headers and bad access tokens
 
 	t.Run("test basic validation fails Without Header", func(t *testing.T) {
-		_, err := client.ValidateAccessTokenAndGetUser("")
+		_, err := client.GetUser("")
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about the header")
+			t.Errorf("GetUser should have returned an error about the header")
 		}
 	})
 
 	t.Run("test basic validation fails With Invalid Header", func(t *testing.T) {
 		badAuthHeader := fmt.Sprintf("BadBearerHeader %s", accessToken)
-		_, err := client.ValidateAccessTokenAndGetUser(badAuthHeader)
+		_, err := client.GetUser(badAuthHeader)
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about the header")
+			t.Errorf("GetUser should have returned an error about the header")
 		}
 	})
 
 	t.Run("test basic validation fails With Wrong Token", func(t *testing.T) {
 		badAuthHeader := "Bearer thisisafaketoken"
-		_, err := client.ValidateAccessTokenAndGetUser(badAuthHeader)
+		_, err := client.GetUser(badAuthHeader)
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about the token")
+			t.Errorf("GetUser should have returned an error about the token")
 		}
 	})
 
@@ -161,9 +236,9 @@ func TestValidations(t *testing.T) {
 		authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
 		// run the test
-		_, err := client.ValidateAccessTokenAndGetUser(authHeader)
+		_, err := client.GetUser(authHeader)
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about the token")
+			t.Errorf("GetUser should have returned an error about the token")
 		}
 	})
 
@@ -181,9 +256,9 @@ func TestValidations(t *testing.T) {
 		}
 
 		// run the test
-		_, err = client.ValidateAccessTokenAndGetUser(authHeader)
+		_, err = client.GetUser(authHeader)
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about issuer")
+			t.Errorf("GetUser should have returned an error about issuer")
 		}
 	})
 
@@ -203,9 +278,9 @@ func TestValidations(t *testing.T) {
 		}
 
 		// run the test
-		_, err = client.ValidateAccessTokenAndGetUser(authHeader)
+		_, err = client.GetUser(authHeader)
 		if err == nil {
-			t.Errorf("ValidateAccessTokenAndGetUser should have returned an error about decoding the token")
+			t.Errorf("GetUser should have returned an error about decoding the token")
 		}
 	})
 }

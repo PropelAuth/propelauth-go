@@ -64,11 +64,11 @@ type OrgMemberInfoFromToken struct {
 	UserPermissions                   []string               `json:"user_permissions,omitempty"`
 }
 
-func (o *OrgMemberInfoFromToken) VerifyExactRole(exactRole string) bool {
+func (o *OrgMemberInfoFromToken) IsRole(exactRole string) bool {
 	return exactRole == o.UserAssignedRole
 }
 
-func (o *OrgMemberInfoFromToken) VerifyMinimumRole(minimumRoles string) bool {
+func (o *OrgMemberInfoFromToken) IsAtLeastRole(minimumRoles string) bool {
 	for _, role := range o.UserInheritedRolesPlusCurrentRole {
 		if minimumRoles == role {
 			return true
@@ -77,7 +77,7 @@ func (o *OrgMemberInfoFromToken) VerifyMinimumRole(minimumRoles string) bool {
 	return false
 }
 
-func (o *OrgMemberInfoFromToken) VerifyPermission(permission string) bool {
+func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 	for _, p := range o.UserPermissions {
 		if permission == p {
 			return true
@@ -87,7 +87,7 @@ func (o *OrgMemberInfoFromToken) VerifyPermission(permission string) bool {
 }
 
 // TODO - ridiculously not efficient
-func (o *OrgMemberInfoFromToken) VerifyAllPermissions(permissions []string) bool {
+func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
 	for _, permission := range permissions {
 		found := false
 		for _, p := range o.UserPermissions {

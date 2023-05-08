@@ -3,7 +3,6 @@ package helpers
 import (
 	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/propelauth/propelauth-go/pkg/models"
 	"strings"
 )
@@ -11,11 +10,6 @@ import (
 type ValidationHelperInterface interface {
 	ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error)
 	ExtractTokenFromAuthorizationHeader(authHeader string) (string, error)
-	ValidateOrgAccessAndGetOrgMemberInfo(user *models.UserFromToken, orgId uuid.UUID) (*models.OrgMemberInfoFromToken, error)
-	ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user *models.UserFromToken, orgId uuid.UUID, minimumRole string) (*models.OrgMemberInfoFromToken, error)
-	ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user *models.UserFromToken, orgId uuid.UUID, exactRole string) (*models.OrgMemberInfoFromToken, error)
-	ValidateOrgAccessAndGetOrgMemberInfoByPermission(user *models.UserFromToken, orgId uuid.UUID, permission string) (*models.OrgMemberInfoFromToken, error)
-	ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user *models.UserFromToken, orgId uuid.UUID, permissions []string) (*models.OrgMemberInfoFromToken, error)
 }
 
 type ValidationHelper struct{}
@@ -61,70 +55,4 @@ func (o *ValidationHelper) ExtractTokenFromAuthorizationHeader(authHeader string
 	}
 
 	return split[1], nil
-}
-
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfo(user *models.UserFromToken, orgId uuid.UUID) (*models.OrgMemberInfoFromToken, error) {
-	if user.OrgIdToOrgMemberInfo == nil {
-		return nil, fmt.Errorf("User does not have access to any organizations")
-	}
-
-	orgMemberInfo := user.GetOrgMemberInfo(orgId)
-
-	if orgMemberInfo == nil {
-		return nil, fmt.Errorf("User does not have access to this organization")
-	}
-
-	return orgMemberInfo, nil
-}
-
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByMinimumRole(user *models.UserFromToken, orgId uuid.UUID, minimumRole string) (*models.OrgMemberInfoFromToken, error) {
-	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	if !orgMemberInfo.VerifyMinimumRole(minimumRole) {
-		return nil, fmt.Errorf("User does not have minimum role needed in this organization")
-	}
-
-	return orgMemberInfo, nil
-}
-
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByExactRole(user *models.UserFromToken, orgId uuid.UUID, exactRole string) (*models.OrgMemberInfoFromToken, error) {
-	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	if !orgMemberInfo.VerifyExactRole(exactRole) {
-		return nil, fmt.Errorf("User does not have the exact role needed in this organization")
-	}
-
-	return orgMemberInfo, nil
-}
-
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByPermission(user *models.UserFromToken, orgId uuid.UUID, permission string) (*models.OrgMemberInfoFromToken, error) {
-	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	if !orgMemberInfo.VerifyPermission(permission) {
-		return nil, fmt.Errorf("User does not have the permission needed in this organization")
-	}
-
-	return orgMemberInfo, nil
-}
-
-func (o *ValidationHelper) ValidateOrgAccessAndGetOrgMemberInfoByAllPermissions(user *models.UserFromToken, orgId uuid.UUID, permissions []string) (*models.OrgMemberInfoFromToken, error) {
-	orgMemberInfo, err := o.ValidateOrgAccessAndGetOrgMemberInfo(user, orgId)
-	if err != nil {
-		return nil, err
-	}
-
-	if !orgMemberInfo.VerifyAllPermissions(permissions) {
-		return nil, fmt.Errorf("User does not have all the permissions needed in this organization")
-	}
-
-	return orgMemberInfo, nil
 }
