@@ -9,8 +9,8 @@ type CreateMagicLinkResponse struct {
 // post types
 
 type CreateMagicLinkParams struct {
-	Email                         string `json:"email"`
-	RedirectURL                   string `json:"redirect_url"`
-	ExpiresInHours                int    `json:"expires_in_hours"`
-	CreateNewUserIfOneDoesntExist bool   `json:"create_new_user_if_one_doesnt_exist"`
+	Email                         string  `json:"email"`
+	RedirectURL                   *string `json:"redirect_url,omitempty"`
+	ExpiresInHours                *int    `json:"expires_in_hours,omitempty"`
+	CreateNewUserIfOneDoesntExist *bool   `json:"create_new_user_if_one_doesnt_exist,omitempty"`
 }

@@ -4,15 +4,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// return types
+// post types
 
 type UserInOrgQueryParams struct {
-	PageSize    int  `json:"page_size"`
-	PageNumber  int  `json:"page_number"`
-	IncludeOrgs bool `json:"include_orgs"`
+	PageSize    *int  `json:"page_size,omitempty"`
+	PageNumber  *int  `json:"page_number,omitempty"`
+	IncludeOrgs *bool `json:"include_orgs,omitempty"`
 }
-
-// post types
 
 type AddUserToOrg struct {
 	UserID uuid.UUID `json:"user_id"`

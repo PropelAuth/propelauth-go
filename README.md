@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/propelauth/propelauth-go)](https://goreportcard.com/report/github.com/propelauth/propelauth-go)
+
 # PropelAuth Go SDK
 
 <p align="center">
@@ -37,6 +39,16 @@ go get github.com/propelauth/propelauth-go-sdk
 
 ### Your sample program
 
+Make a new directory, and initialize your program.
+
+```sh
+mkdir propelauth-example
+cd propelauth-example
+go mod init propelauth-example
+go get github.com/propelauth/propelauth-go
+```
+
+Create a file that looks like this.
 
 ```go
 package main
@@ -44,23 +56,37 @@ package main
 import (
     "os"
     "fmt"
-    "github.com/propelauth/propelauth-go-sdk"
+    propelauth "github.com/propelauth/propelauth-go/pkg"
+    models "github.com/propelauth/propelauth-go/pkg/models"
 )
 
 func main() {
-    // you can get these variables from the Backend Integrations section on your dashboard
+    // initialize the client
+
+    // (you can get these variables from the Backend Integrations section on your dashboard)
     apiKey := os.Getenv("PROPELAUTH_API_KEY")
     authUrl := os.Getenv("PROPELAUTH_AUTH_URL")
-    
-	client, err := InitBaseAuth(authUrl, apiKey, nil)
-	if err != nil {
-		panic(err)
-	}
+
+    client, err := propelauth.InitBaseAuth(authUrl, apiKey, nil)
+    if err != nil {
+        panic(err)
+    }
+
+    // see how many users we have now
+
+    queryParams := models.UserQueryParams{}
+
+    users, err := client.FetchUsersByQuery(queryParams)
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf("Found %d users\n", users.TotalUsers)
 
     // create a new user
-    
-    newUser = CreateUserParams{
-        Email: "tanis@solace.com"
+
+    newUser := models.CreateUserParams{
+        Email: "tanis@solace.com",
     }
 
     createdUser, err := client.CreateUser(newUser)
@@ -68,17 +94,23 @@ func main() {
         panic(err)
     }
 
-    fmt.Println("Create a user with the ID " + createdUser.UserID)
+    fmt.Printf("Created a user with the ID %#v\n", createdUser.UserID)
 
     // fetch the user we just created
 
-    fetchedUser, err = client.FetchUserMetadataByUserId(createdUser.UserID)
+    fetchedUser, err := client.FetchUserMetadataByUserId(createdUser.UserID, false)
     if err != nil {
         panic(err)
     }
 
     fmt.Printf("Found the user we just created %#v\n", fetchedUser)
 }
+```
+
+Run it.
+    
+```sh
+go run .
 ```
 
 ## License

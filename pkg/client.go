@@ -13,7 +13,7 @@ import (
 )
 
 const urlPrefix = "https//propelauth.com/"
-const backendUrlApiPrefix = "api/backend/v1/"
+const backendUrlApiPrefix = "/api/backend/v1/"
 
 type Client struct {
 	apiKey                    string
@@ -58,7 +58,7 @@ func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *mode
 		} else if queryResponse.StatusCode == 404 {
 			return nil, fmt.Errorf("URL is incorrect")
 		} else if queryResponse.StatusCode != 200 { // this must be last
-			return nil, fmt.Errorf("Unknown error when fetching token verification metadata")
+			return nil, fmt.Errorf("Unknown error when fetching token verification metadata. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.ResponseText)
 		}
 
 		authTokenVerificationMetadataResponse, err := marshalHelper.GetAuthTokenVerificationMetadataResponseFromBytes(queryResponse.BodyBytes)
@@ -286,12 +286,23 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error) {
 	urlPostfix := "user/query"
 
-	bodyJson, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
+	// there's probably a better way to do this
+	queryParams := url.Values{}
+
+	if params.PageSize != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageSize))
+	}
+	if params.OrderBy != nil {
+		queryParams.Add("order_by", *params.OrderBy)
+	}
+	if params.EmailOrUsername != nil {
+		queryParams.Add("email_or_username", *params.EmailOrUsername)
+	}
+	if params.IncludeOrgs != nil {
+		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +322,7 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 // public methods to modify a user
 
 func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, error) {
-	urlPostfix := "user"
+	urlPostfix := "user/"
 
 	bodyJson, err := json.Marshal(params)
 	if err != nil {
@@ -396,7 +407,7 @@ func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPa
 }
 
 func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error) {
-	urlPostfix := "migrate_user"
+	urlPostfix := "migrate_user/"
 
 	bodyJson, err := json.Marshal(params)
 	if err != nil {
@@ -555,7 +566,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 }
 
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
-	urlPostfix := "org"
+	urlPostfix := "org/"
 
 	// assemble the parameters
 

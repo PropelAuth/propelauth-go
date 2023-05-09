@@ -84,7 +84,7 @@ func TestValidations(t *testing.T) {
 		}
 
 		// run tests
-		
+
 		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
@@ -93,7 +93,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("IsAtLeastRole", func(t *testing.T) {
 		// setup tests
-		
+
 		user, err := client.GetUser(authHeader)
 		if err != nil {
 			t.Errorf("GetUser returned an error: %s", err)
@@ -105,7 +105,7 @@ func TestValidations(t *testing.T) {
 		}
 
 		// run tests
-		
+
 		result := orgMemberInfo.IsAtLeastRole("Member")
 		if !result {
 			t.Errorf("IsAtLeastRole with Member should have returned true")
@@ -124,7 +124,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("IsRole", func(t *testing.T) {
 		// setup tests
-		
+
 		user, err := client.GetUser(authHeader)
 		if err != nil {
 			t.Errorf("GetUser returned an error: %s", err)
@@ -155,7 +155,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("HasPermission", func(t *testing.T) {
 		// setup tests
-		
+
 		user, err := client.GetUser(authHeader)
 		if err != nil {
 			t.Errorf("GetUser returned an error: %s", err)
@@ -181,7 +181,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("HasAllPermissions", func(t *testing.T) {
 		// setup tests
-		
+
 		user, err := client.GetUser(authHeader)
 		if err != nil {
 			t.Errorf("GetUser returned an error: %s", err)
@@ -193,7 +193,7 @@ func TestValidations(t *testing.T) {
 		}
 
 		// run tests
-		
+
 		result := orgMemberInfo.HasAllPermissions([]string{"Read", "Write"})
 		if !result {
 			t.Errorf("HasPermission with Read/Write should have returned true")

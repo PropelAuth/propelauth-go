@@ -30,7 +30,7 @@ type UpdateOrg struct {
 }
 
 type OrgQueryParams struct {
-	PageSize   int    `json:"page_size"`
-	PageNumber int    `json:"page_number"`
-	OrderBy    string `json:"order_by"`
+	PageSize   *int    `json:"page_size,omitempty"`
+	PageNumber *int    `json:"page_number,omitempty"`
+	OrderBy    *string `json:"order_by,omitempty"`
 }

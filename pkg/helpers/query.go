@@ -53,7 +53,6 @@ func (o *QueryHelper) Delete(token string, urlPostfix string, queryParams url.Va
 // public helper method
 
 func (o *QueryHelper) RequestHelper(method string, token string, url string, body []byte) (*QueryResponse, error) {
-
 	requestBody := bytes.NewBuffer(body)
 
 	// create request
@@ -62,9 +61,9 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 		return nil, fmt.Errorf("Error on creating request: %v", err)
 	}
 
-	// add authorization
-	var bearer = "Bearer " + token
-	req.Header.Add("Authorization", bearer)
+	// add headers
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+token)
 
 	// send request
 	client := &http.Client{}
