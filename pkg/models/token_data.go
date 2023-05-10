@@ -20,7 +20,7 @@ type AccessTokenResponse struct {
 type AccessTokenData struct {
 	AccessToken          string                            `json:"access_token"`
 	ExpiresAtSeconds     int64                             `json:"expires_at_seconds"`
-	OrgIdToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	OrgIDToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	User                 UserMetadata                      `json:"user"`
 	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
 }
@@ -46,22 +46,22 @@ type UserAndOrgMemberInfoFromToken struct {
 
 // UserFromToken is the user data from the JWT.
 type UserFromToken struct {
-	UserId               uuid.UUID                          `json:"user_id"`
-	LegacyUserId         string                             `json:"legacy_user_id,omitempty"`
-	ImpersonatorUserId   uuid.UUID                          `json:"impersonator_user_id,omitempty"`
+	UserID               uuid.UUID                          `json:"user_id"`
+	LegacyUserID         string                             `json:"legacy_user_id,omitempty"`
+	ImpersonatorUserID   uuid.UUID                          `json:"impersonator_user_id,omitempty"`
 	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
-	OrgIdToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	jwt.RegisteredClaims
 }
 
 // GetOrgMemberInfo returns the OrgMemberInfoFromToken for the given Organization UUID.
-func (o *UserFromToken) GetOrgMemberInfo(orgId uuid.UUID) *OrgMemberInfoFromToken {
-	return o.OrgIdToOrgMemberInfo[orgId.String()]
+func (o *UserFromToken) GetOrgMemberInfo(orgID uuid.UUID) *OrgMemberInfoFromToken {
+	return o.OrgIDToOrgMemberInfo[orgID.String()]
 }
 
 // OrgMemberInfoFromToken is data about an organization and about this user's membership in it.
 type OrgMemberInfoFromToken struct {
-	OrgId                             uuid.UUID              `json:"org_id"`
+	OrgID                             uuid.UUID              `json:"org_id"`
 	OrgName                           string                 `json:"org_name"`
 	OrgMetadata                       map[string]interface{} `json:"org_metadata,omitempty"`
 	UserAssignedRole                  string                 `json:"user_assigned_role"`
@@ -81,6 +81,7 @@ func (o *OrgMemberInfoFromToken) IsAtLeastRole(minimumRoles string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -91,6 +92,7 @@ func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -99,12 +101,15 @@ func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
 	// TODO - ridiculously not efficient
 	for _, permission := range permissions {
 		found := false
+
 		for _, p := range o.UserPermissions {
 			if permission == p {
 				found = true
+
 				break
 			}
 		}
+
 		if !found {
 			return false
 		}

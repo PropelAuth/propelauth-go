@@ -13,36 +13,35 @@ import (
 	"github.com/propelauth/propelauth-go/pkg/models"
 )
 
-const urlPrefix = "https//propelauth.com/"
-const backendUrlApiPrefix = "/api/backend/v1/"
+const backendURLApiPrefix = "/api/backend/v1/"
 
 // Client is the main struct for the PropelAuth Go library. It contains all the methods for interacting with the
 // PropelAuth backend.
 type Client struct {
 	apiKey                    string
-	authUrl                   string
+	authURL                   string
 	tokenVerificationMetadata models.TokenVerificationMetadata
 	queryHelper               helpers.QueryHelperInterface
 	marshalHelper             helpers.MarshalHelperInterface
 	validationHelper          helpers.ValidationHelperInterface
 }
 
-// InitBaseAuth initializes the PropelAuth client with the authUrl, apiKey.
+// InitBaseAuth initializes the PropelAuth client with the authURL, apiKey.
 //
 // This is the normal entrance to accessing the PropelAuth backend.
 //
-// The authUrl and apiKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
+// The authURL and apiKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
 // You can pass in a tokenVerificationMetadata if you have it, but it's not required.
-func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
+func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
 	// setup helpers
-	queryHelper := helpers.NewQueryHelper(authUrl, backendUrlApiPrefix)
+	queryHelper := helpers.NewQueryHelper(authURL, backendURLApiPrefix)
 	marshalHelper := &helpers.MarshalHelper{}
 	validationHelper := &helpers.ValidationHelper{}
 
-	// validate the authUrl
-	url, err := url.ParseRequestURI(authUrl)
+	// validate the authURL
+	url, err := url.ParseRequestURI(authURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Couldn't parse the authURL: %w", err)
 	} else if url.Scheme != "https" {
 		return nil, fmt.Errorf("URL must start with https://")
 	} else if url.Path != "" {
@@ -57,33 +56,36 @@ func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *mode
 
 		queryResponse, err := queryHelper.RequestHelper("GET", apiKey, endpointURL, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Error on fetching token verification metadata: %w", err)
 		}
 
-		if queryResponse.StatusCode == 401 {
-			return nil, fmt.Errorf("apiKey is incorrect")
-		} else if queryResponse.StatusCode == 400 {
-			return nil, fmt.Errorf("Bad request: %s", queryResponse.ResponseText)
-		} else if queryResponse.StatusCode == 404 {
-			return nil, fmt.Errorf("URL is incorrect")
-		} else if queryResponse.StatusCode != 200 { // this must be last
-			return nil, fmt.Errorf("Unknown error when fetching token verification metadata. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.ResponseText)
+		if queryResponse.StatusCode != 200 {
+			switch statusCode := queryResponse.StatusCode; statusCode {
+			case 401:
+				return nil, fmt.Errorf("apiKey is incorrect")
+			case 400:
+				return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+			case 404:
+				return nil, fmt.Errorf("URL is incorrect")
+			default:
+				return nil, fmt.Errorf("Unknown error when fetching token verification metadata. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.BodyText)
+			}
 		}
 
 		authTokenVerificationMetadataResponse, err := marshalHelper.GetAuthTokenVerificationMetadataResponseFromBytes(queryResponse.BodyBytes)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Error on unmarshalling bytes to AuthTokenVerificationMetadataResponse: %w", err)
 		}
 
 		tokenVerificationMetadata = &models.TokenVerificationMetadata{
 			VerifierKey: authTokenVerificationMetadataResponse.PublicKeyPem,
-			Issuer:      authUrl,
+			Issuer:      authURL,
 		}
 	}
 
 	client := &Client{
 		apiKey:                    apiKey,
-		authUrl:                   authUrl,
+		authURL:                   authURL,
 		tokenVerificationMetadata: *tokenVerificationMetadata,
 		queryHelper:               queryHelper,
 		marshalHelper:             marshalHelper,
@@ -95,10 +97,10 @@ func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *mode
 
 // Public methods to fetch a user or users
 
-// FetchUserMetadataByUserId will fetch a single user by their user ID. If includeOrgs is true, we'll also
+// FetchUserMetadataByUserID will fetch a single user by their user ID. If includeOrgs is true, we'll also
 // fetch the organizations data for each organization the user is in.
-func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (*models.UserMetadata, error) {
-	urlPostfix := fmt.Sprintf("user/%s", userId)
+func (o *Client) FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (*models.UserMetadata, error) {
+	urlPostfix := fmt.Sprintf("user/%s", userID)
 
 	queryParams := url.Values{
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
@@ -106,16 +108,16 @@ func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by id: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by id: %w", err)
 	}
 
 	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
 	return user, nil
@@ -133,16 +135,16 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*mode
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by email: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by email: %w", err)
 	}
 
 	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
 	return user, nil
@@ -160,20 +162,19 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by username: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching user by username: %w", err)
 	}
 
 	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
 	return user, nil
-
 }
 
 // FetchBatchUserMetadataByUserIds will fetch all the users with the listed IDS. If includeOrgs is true, we'll
@@ -195,25 +196,25 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 		UserIds: userIds,
 	}
 
-	bodyJson, err := json.Marshal(bodyParams)
+	bodyJSON, err := json.Marshal(bodyParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by ids: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by ids: %w", err)
 	}
 
 	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
 	return users, nil
@@ -229,6 +230,7 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 	queryParams := url.Values{
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
+
 	type UserIds struct {
 		Emails []string `json:"emails"`
 	}
@@ -237,25 +239,25 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 		Emails: emails,
 	}
 
-	bodyJson, err := json.Marshal(bodyParams)
+	bodyJSON, err := json.Marshal(bodyParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by emails: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by emails: %w", err)
 	}
 
 	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
 	return users, nil
@@ -280,25 +282,25 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 		Usernames: usernames,
 	}
 
-	bodyJson, err := json.Marshal(bodyParams)
+	bodyJSON, err := json.Marshal(bodyParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by usernames: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching batch users by usernames: %w", err)
 	}
 
 	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
 	return users, nil
@@ -326,16 +328,16 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching users by query: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching users by query: %w", err)
 	}
 
 	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
 	return users, nil
@@ -347,23 +349,23 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, error) {
 	urlPostfix := "user/"
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating user: %w", err)
 	}
 
 	user, err := o.marshalHelper.GetUserFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserID: %w", err)
 	}
 
 	return user, nil
@@ -371,21 +373,21 @@ func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, err
 
 // UpdateUserEmail will update a user's email address. if RequireEmailConfirmation is set to true, we'll send
 // out an email to confirm the new email address.
-func (o *Client) UpdateUserEmail(user_id uuid.UUID, params models.UpdateEmail) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/email", user_id)
+func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/email", userID)
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user email: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user email: %w", err)
 	}
 
 	return true, nil
@@ -393,42 +395,42 @@ func (o *Client) UpdateUserEmail(user_id uuid.UUID, params models.UpdateEmail) (
 
 // UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
 // that are provided.
-func (o *Client) UpdateUserMetadata(userId uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/metadata", userId)
+func (o *Client) UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/metadata", userID)
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user metadata: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user metadata: %w", err)
 	}
 
 	return true, nil
 }
 
 // UpdateUserPassword will update a user's password. If the user is logged in, they will be logged out.
-func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPasswordParam) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/password", userId)
+func (o *Client) UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/password", userID)
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user password: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on updating user password: %w", err)
 	}
 
 	return true, nil
@@ -438,18 +440,18 @@ func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPa
 func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error) {
 	urlPostfix := "migrate_user/"
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on migrating user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on migrating user: %w", err)
 	}
 
 	return true, nil
@@ -457,48 +459,48 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 
 // DeleteUser will delete a user, removing them from all organizations they are in. This is a permanent
 // action and cannot be undone. If you're unsure if you want this, use DisableUser instead.
-func (o *Client) DeleteUser(userId uuid.UUID) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s", userId)
+func (o *Client) DeleteUser(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s", userID)
 
 	queryResponse, err := o.queryHelper.Delete(o.apiKey, urlPostfix, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on deleting user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on deleting user: %w", err)
 	}
 
 	return true, nil
 }
 
 // DisableUser will disable a user, preventing them from logging in.
-func (o *Client) DisableUser(userId uuid.UUID) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/disable", userId)
+func (o *Client) DisableUser(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/disable", userID)
 
 	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on disabling user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on disabling user: %w", err)
 	}
 
 	return true, nil
 }
 
 // EnableUser will enable a user, meaning they will be allowed to logging in.
-func (o *Client) EnableUser(userId uuid.UUID) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/enable", userId)
+func (o *Client) EnableUser(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/enable", userID)
 
 	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on enabling user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on enabling user: %w", err)
 	}
 
 	return true, nil
@@ -507,26 +509,26 @@ func (o *Client) EnableUser(userId uuid.UUID) (bool, error) {
 // public methods for users in orgs
 
 // FetchUsersInOrg will fetch a paged list of users in an organization.
-func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error) {
-	urlPostfix := fmt.Sprintf("user/org/%s", orgId)
+func (o *Client) FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error) {
+	urlPostfix := fmt.Sprintf("user/org/%s", orgID)
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching users in org: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching users in org: %w", err)
 	}
 
 	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
 	return users, nil
@@ -536,18 +538,18 @@ func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params models.UserInOrgQueryPa
 func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 	urlPostfix := "org/add_user"
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on adding user to org: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on adding user to org: %w", err)
 	}
 
 	return true, nil
@@ -556,21 +558,21 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 // public methods for orgs
 
 // FetchOrg will fetch an org's data.
-func (o *Client) FetchOrg(orgId uuid.UUID) (*models.OrgMetadata, error) {
-	urlPostfix := fmt.Sprintf("org/%s", orgId)
+func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
 
 	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching org: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching org: %w", err)
 	}
 
 	org, err := o.marshalHelper.GetOrgMetadataFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
 	}
 
 	return org, nil
@@ -580,23 +582,23 @@ func (o *Client) FetchOrg(orgId uuid.UUID) (*models.OrgMetadata, error) {
 func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error) {
 	urlPostfix := "org/query"
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching orgs by query: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on fetching orgs by query: %w", err)
 	}
 
 	orgs, err := o.marshalHelper.GetOrgListFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgList: %w", err)
 	}
 
 	return orgs, nil
@@ -616,57 +618,57 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 		Name: name,
 	}
 
-	bodyJson, err := json.Marshal(bodyParams)
+	bodyJSON, err := json.Marshal(bodyParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating org: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating org: %w", err)
 	}
 
 	org, err := o.marshalHelper.GetOrgMetadataFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
 	}
 
 	return org, nil
 }
 
 // AllowOrgToSetupSamlConnection will turn on an org's ability to setup a SAML connection.
-func (o *Client) AllowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error) {
-	urlPostfix := fmt.Sprintf("org/%s/allow_saml", orgId)
+func (o *Client) AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s/allow_saml", orgID)
 
 	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on allowing org to setup SAML connection: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on allowing org to setup SAML connection: %w", err)
 	}
 
 	return true, nil
 }
 
 // DisallowOrgToSetupSamlConnection will turn off an org's ability to setup a SAML connection. This is the default.
-func (o *Client) DisallowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error) {
-	urlPostfix := fmt.Sprintf("org/%s/disallow_saml", orgId)
+func (o *Client) DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s/disallow_saml", orgID)
 
 	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on disallowing org to setup SAML connection: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return false, err
+		return false, fmt.Errorf("Error on disallowing org to setup SAML connection: %w", err)
 	}
 
 	return true, nil
@@ -675,7 +677,7 @@ func (o *Client) DisallowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error)
 // public methods for misc functionality
 
 // CreateAccessToken creates an access token.
-func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*models.AccessToken, error) {
+func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int) (*models.AccessToken, error) {
 	urlPostfix := "access_token"
 
 	// assemble body params
@@ -686,37 +688,40 @@ func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*mo
 	}
 
 	bodyParams := CreateAccessToken{
-		UserID:            userId,
+		UserID:            userID,
 		DurationInMinutes: durationInMinutes,
 	}
 
-	bodyJson, err := json.Marshal(bodyParams)
+	bodyJSON, err := json.Marshal(bodyParams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating access token: %w", err)
 	}
 
-	if queryResponse.StatusCode == 401 {
-		return nil, fmt.Errorf("API Key is incorrect")
-	} else if queryResponse.StatusCode == 400 {
-		return nil, fmt.Errorf("Bad request: %s", queryResponse.ResponseText)
-	} else if queryResponse.StatusCode == 403 {
-		return nil, fmt.Errorf("User not found")
-	} else if queryResponse.StatusCode == 404 {
-		return nil, fmt.Errorf("Access token creation not enabled")
-	} else if queryResponse.StatusCode != 200 { // this must be last
-		return nil, fmt.Errorf("Unknown error when performing operation")
+	if queryResponse.StatusCode != 200 {
+		switch statusCode := queryResponse.StatusCode; statusCode {
+		case 401:
+			return nil, fmt.Errorf("API Key is incorrect")
+		case 400:
+			return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+		case 403:
+			return nil, fmt.Errorf("User not found")
+		case 404:
+			return nil, fmt.Errorf("Access token creation not enabled")
+		default:
+			return nil, fmt.Errorf("Unknown error when creating access token. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.BodyText)
+		}
 	}
 
 	accessToken, err := o.marshalHelper.GetAccessTokenFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to AccessToken: %w", err)
 	}
 
 	return accessToken, nil
@@ -726,23 +731,23 @@ func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*mo
 func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.CreateMagicLinkResponse, error) {
 	urlPostfix := "magic_link"
 
-	bodyJson, err := json.Marshal(params)
+	bodyJSON, err := json.Marshal(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJson)
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating magic link: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on creating magic link: %w", err)
 	}
 
 	magicLink, err := o.marshalHelper.GetMagicLinkResponseFromBytes(queryResponse.BodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on unmarshalling bytes to MagicLinkResponse: %w", err)
 	}
 
 	return magicLink, nil
@@ -755,12 +760,12 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 func (o *Client) GetUser(authHeader string) (*models.UserFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on extracting token from authorization header: %w", err)
 	}
 
 	user, err := o.validationHelper.ValidateAccessTokenAndGetUser(accessToken, o.tokenVerificationMetadata)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error on validating access token and getting user: %w", err)
 	}
 
 	return user, nil
@@ -769,18 +774,21 @@ func (o *Client) GetUser(authHeader string) (*models.UserFromToken, error) {
 // private method to handle errors
 
 func (o *Client) returnErrorMessageIfNotOk(queryResponse *helpers.QueryResponse) error {
-	if queryResponse.StatusCode == 401 {
-		return fmt.Errorf("API Key is incorrect")
-	} else if queryResponse.StatusCode == 400 {
-		return fmt.Errorf("Bad request: %s", queryResponse.ResponseText)
-	} else if queryResponse.StatusCode == 404 {
-		return fmt.Errorf("API not found")
-	} else if queryResponse.StatusCode == 426 {
-		return fmt.Errorf("Cannot use organizations unless B2B support is enabled. Enable it in your PropelAuth dashboard.")
-	} else if queryResponse.StatusCode == 429 {
-		return fmt.Errorf("Your app is making too many requests, too quickly")
-	} else if queryResponse.StatusCode != 200 { // this must be last
-		return fmt.Errorf("Unknown error when performing operation")
+	if queryResponse.StatusCode != 200 {
+		switch statusCode := queryResponse.StatusCode; statusCode {
+		case 401:
+			return fmt.Errorf("API Key is incorrect")
+		case 400:
+			return fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+		case 404:
+			return fmt.Errorf("API not found")
+		case 426:
+			return fmt.Errorf("Cannot use organizations unless B2B support is enabled--enable it in your PropelAuth dashboard")
+		case 429:
+			return fmt.Errorf("Your app is making too many requests, too quickly")
+		default:
+			return fmt.Errorf("Unknown error when performing operation. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.BodyText)
+		}
 	}
 
 	return nil

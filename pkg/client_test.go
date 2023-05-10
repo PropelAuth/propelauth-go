@@ -1,7 +1,8 @@
-package client
+package client_test
 
 import (
 	"fmt"
+	propelauth "github.com/propelauth/propelauth-go/pkg"
 	"github.com/propelauth/propelauth-go/pkg/models"
 	testHelpers "github.com/propelauth/propelauth-go/pkg/test"
 	"testing"
@@ -10,58 +11,58 @@ import (
 func TestInitializations(t *testing.T) {
 	// setup common test data
 
-	_, public_key := testHelpers.GenerateRSAKeys()
+	_, publicKey := testHelpers.GenerateRSAKeys()
 
 	tokenVerificationMetadata := &models.TokenVerificationMetadata{
-		VerifierKey: public_key,
+		VerifierKey: publicKey,
 		Issuer:      "issuertest",
 	}
 
 	// test initialization
 
 	t.Run("test init with trailing slash fails", func(t *testing.T) {
-		_, err := InitBaseAuth("https://auth.example.com/", "apikey", tokenVerificationMetadata)
+		_, err := propelauth.InitBaseAuth("https://auth.example.com/", "apikey", tokenVerificationMetadata)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error, but did not")
 		}
 	})
 
 	t.Run("test init with http and not https fails", func(t *testing.T) {
-		_, err := InitBaseAuth("http://auth.example.com", "apikey", tokenVerificationMetadata)
+		_, err := propelauth.InitBaseAuth("http://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error about https, but did not")
 		}
 	})
-
 }
 
 func TestValidations(t *testing.T) {
 	// setup common test data
 
-	private_key, public_key := testHelpers.GenerateRSAKeys()
+	privateKey, publicKey := testHelpers.GenerateRSAKeys()
 
-	userId := testHelpers.RandomUserID()
+	userID := testHelpers.RandomUserID()
 	org := testHelpers.RandomOrg("Admin", nil)
 	org.UserInheritedRolesPlusCurrentRole = []string{"Admin", "Member"}
 	org.UserPermissions = []string{"Read", "Write"}
-	orgIdToOrgMemberInfo := testHelpers.OrgsToOrgIdMap([]models.OrgMemberInfoFromToken{org})
+	orgIDToOrgMemberInfo := testHelpers.OrgsToOrgIDMap([]models.OrgMemberInfoFromToken{org})
 	user := models.UserFromToken{
-		UserId:               userId,
-		OrgIdToOrgMemberInfo: orgIdToOrgMemberInfo,
+		UserID:               userID,
+		OrgIDToOrgMemberInfo: orgIDToOrgMemberInfo,
 	}
 
-	accessToken := testHelpers.CreateAccessToken(user, private_key)
+	accessToken := testHelpers.CreateAccessToken(user, privateKey)
 
 	authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
 	tokenVerificationMetadata := &models.TokenVerificationMetadata{
-		VerifierKey: public_key,
+		VerifierKey: publicKey,
 		Issuer:      "issuertest",
 	}
 
-	client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+	client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 	if err != nil {
 		t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
+
 		return
 	}
 
@@ -70,8 +71,7 @@ func TestValidations(t *testing.T) {
 	t.Run("GetUser", func(t *testing.T) {
 		_, err := client.GetUser(authHeader)
 		if err != nil {
-			fmt.Println(authHeader)
-			t.Errorf("GetUser returned an error: %s", err)
+			t.Errorf("GetUser on %s returned an error: %s", authHeader, err)
 		}
 	})
 
@@ -85,7 +85,7 @@ func TestValidations(t *testing.T) {
 
 		// run tests
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -99,7 +99,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -130,7 +130,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -161,7 +161,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -187,7 +187,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgId)
+		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -232,7 +232,7 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Expired Token", func(t *testing.T) {
 		// setup the expired token
-		accessToken := testHelpers.CreateExpiredAccessToken(user, private_key)
+		accessToken := testHelpers.CreateExpiredAccessToken(user, privateKey)
 		authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
 		// run the test
@@ -245,13 +245,14 @@ func TestValidations(t *testing.T) {
 	t.Run("test basic validation fails With Bad Issuer", func(t *testing.T) {
 		// setup the bad issuer
 		tokenVerificationMetadata := &models.TokenVerificationMetadata{
-			VerifierKey: public_key,
+			VerifierKey: publicKey,
 			Issuer:      "newissuertestthatwontmatch",
 		}
 
-		client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot continue this test: %s", err)
+
 			return
 		}
 
@@ -264,16 +265,17 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Wrong Key", func(t *testing.T) {
 		// generate a client with new random keys
-		_, public_key := testHelpers.GenerateRSAKeys()
+		_, publicKey := testHelpers.GenerateRSAKeys()
 
 		tokenVerificationMetadata := &models.TokenVerificationMetadata{
-			VerifierKey: public_key,
+			VerifierKey: publicKey,
 			Issuer:      "issuertest",
 		}
 
-		client, err := InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
+
 			return
 		}
 

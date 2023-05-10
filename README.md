@@ -92,7 +92,7 @@ func main() {
 
     // fetch the user we just created
 
-    fetchedUser, err := client.FetchUserMetadataByUserId(createdUser.UserID, false)
+    fetchedUser, err := client.FetchUserMetadataByUserID(createdUser.UserID, false)
     if err != nil {
         panic(err)
     }
@@ -101,13 +101,17 @@ func main() {
 }
 ```
 
-Set the two environment variables, PROPELAUTH_API_KEY and PROPELAUTH_AUTH_URL, with those values from the Backend Integrations section on your dashboard.
+Set the two environment variables, PROPELAUTH_API_KEY and PROPELAUTH_AUTH_URL, with the values from the Backend Integrations section on your dashboard.
 
 Finally, run the program.
     
 ```sh
 go run .
 ```
+
+You will see that a user was created. You can see that use in the dashboard.
+
+Just for fun, if you run this program again, you'll get an error message saying, *"An account already exists with that email address."*
 
 ## License
 

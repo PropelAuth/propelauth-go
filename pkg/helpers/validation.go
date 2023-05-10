@@ -2,6 +2,7 @@
 package helpers
 
 import (
+	"errors"
 	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/propelauth/propelauth-go/pkg/models"
@@ -18,7 +19,6 @@ type ValidationHelper struct{}
 // ValidateAccessTokenAndGetUser validates the access token and returns the user data. Instead of using this
 // directly, look at client.GetUser(authHeader) instead.
 func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error) {
-
 	claims := &models.UserFromToken{}
 
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
@@ -30,14 +30,14 @@ func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tok
 	})
 
 	// friendly error messages
-	if err == jwt.ErrTokenMalformed {
+	if errors.Is(err, jwt.ErrTokenMalformed) {
 		return nil, fmt.Errorf("Error decoding JWT: malformed token")
-	} else if err == jwt.ErrTokenSignatureInvalid {
+	} else if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
 		return nil, fmt.Errorf("Error decoding JWT: invalid token signature")
-	} else if err == jwt.ErrTokenExpired || err == jwt.ErrTokenNotValidYet {
+	} else if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
 		return nil, fmt.Errorf("Error decoding JWT: expired token")
 	} else if err != nil {
-		return nil, fmt.Errorf("Error decoding JWT: unknown error: %v", err)
+		return nil, fmt.Errorf("Error decoding JWT: unknown error: %w", err)
 	} else if !token.Valid {
 		return nil, fmt.Errorf("Error decoding JWT: invalid token")
 	} else if claims.Issuer != tokenVerificationMetadata.Issuer {

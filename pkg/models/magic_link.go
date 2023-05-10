@@ -4,7 +4,7 @@ package models
 
 // CreateMagicLinkResponse has one field, URL, which is the magic link to sign someone in automatically.
 type CreateMagicLinkResponse struct {
-	Url string `json:"url"`
+	URL string `json:"url"`
 }
 
 // post types
