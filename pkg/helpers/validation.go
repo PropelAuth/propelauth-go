@@ -1,3 +1,4 @@
+// Package helpers contains internal helper functions for the client, and are not intended to be used directly.
 package helpers
 
 import (
@@ -14,6 +15,8 @@ type ValidationHelperInterface interface {
 
 type ValidationHelper struct{}
 
+// ValidateAccessTokenAndGetUser validates the access token and returns the user data. Instead of using this
+// directly, look at client.GetUser(authHeader) instead.
 func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error) {
 
 	claims := &models.UserFromToken{}

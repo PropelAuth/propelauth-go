@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// access token
+// Access token models.
+// These are used behind the scenes in the client, and you probably won't need to use them directly.
 
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
@@ -24,7 +25,7 @@ type AccessTokenData struct {
 	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
 }
 
-// models used when initializing the client
+// Models used when initializing the client
 
 type AuthTokenVerificationMetadataResponse struct {
 	PublicKeyPem rsa.PublicKey `json:"public_key_pem"`
@@ -35,13 +36,15 @@ type TokenVerificationMetadata struct {
 	Issuer      string
 }
 
-// data from token
+// Data from token
 
+// UserAndOrgMemberInfoFromToken is the user and organization data from the JWT.
 type UserAndOrgMemberInfoFromToken struct {
 	User          UserFromToken
 	OrgMemberInfo OrgMemberInfoFromToken
 }
 
+// UserFromToken is the user data from the JWT.
 type UserFromToken struct {
 	UserId               uuid.UUID                          `json:"user_id"`
 	LegacyUserId         string                             `json:"legacy_user_id,omitempty"`
@@ -51,10 +54,12 @@ type UserFromToken struct {
 	jwt.RegisteredClaims
 }
 
+// GetOrgMemberInfo returns the OrgMemberInfoFromToken for the given Organization UUID.
 func (o *UserFromToken) GetOrgMemberInfo(orgId uuid.UUID) *OrgMemberInfoFromToken {
 	return o.OrgIdToOrgMemberInfo[orgId.String()]
 }
 
+// OrgMemberInfoFromToken is data about an organization and about this user's membership in it.
 type OrgMemberInfoFromToken struct {
 	OrgId                             uuid.UUID              `json:"org_id"`
 	OrgName                           string                 `json:"org_name"`
@@ -64,10 +69,12 @@ type OrgMemberInfoFromToken struct {
 	UserPermissions                   []string               `json:"user_permissions,omitempty"`
 }
 
+// IsRole returns true if the user has the exact role.
 func (o *OrgMemberInfoFromToken) IsRole(exactRole string) bool {
 	return exactRole == o.UserAssignedRole
 }
 
+// IsAtLeastRole returns true if the user has the exact role or a role that is higher in the hierarchy.
 func (o *OrgMemberInfoFromToken) IsAtLeastRole(minimumRoles string) bool {
 	for _, role := range o.UserInheritedRolesPlusCurrentRole {
 		if minimumRoles == role {
@@ -77,6 +84,7 @@ func (o *OrgMemberInfoFromToken) IsAtLeastRole(minimumRoles string) bool {
 	return false
 }
 
+// HasPermission returns true if the user has the exact permission.
 func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 	for _, p := range o.UserPermissions {
 		if permission == p {
@@ -86,8 +94,9 @@ func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 	return false
 }
 
-// TODO - ridiculously not efficient
+// HasAllPermissions returns true if the user has all of the permissions.
 func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
+	// TODO - ridiculously not efficient
 	for _, permission := range permissions {
 		found := false
 		for _, p := range o.UserPermissions {

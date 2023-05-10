@@ -1,3 +1,4 @@
+// Package client is the main package for the PropelAuth Go library.
 package client
 
 import (
@@ -15,6 +16,8 @@ import (
 const urlPrefix = "https//propelauth.com/"
 const backendUrlApiPrefix = "/api/backend/v1/"
 
+// Client is the main struct for the PropelAuth Go library. It contains all the methods for interacting with the
+// PropelAuth backend.
 type Client struct {
 	apiKey                    string
 	authUrl                   string
@@ -24,6 +27,12 @@ type Client struct {
 	validationHelper          helpers.ValidationHelperInterface
 }
 
+// InitBaseAuth initializes the PropelAuth client with the authUrl, apiKey.
+//
+// This is the normal entrance to accessing the PropelAuth backend.
+//
+// The authUrl and apiKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
+// You can pass in a tokenVerificationMetadata if you have it, but it's not required.
 func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
 	// setup helpers
 	queryHelper := helpers.NewQueryHelper(authUrl, backendUrlApiPrefix)
@@ -84,8 +93,10 @@ func InitBaseAuth(authUrl string, apiKey string, tokenVerificationMetadata *mode
 	return client, nil
 }
 
-// public methods to fetch a user or users
+// Public methods to fetch a user or users
 
+// FetchUserMetadataByUserId will fetch a single user by their user ID. If includeOrgs is true, we'll also
+// fetch the organizations data for each organization the user is in.
 func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := fmt.Sprintf("user/%s", userId)
 
@@ -110,6 +121,8 @@ func (o *Client) FetchUserMetadataByUserId(userId uuid.UUID, includeOrgs bool) (
 	return user, nil
 }
 
+// FetchUserMetadataByEmail will fetch a single user by their email. If includeOrgs is true, we'll also
+// fetch the organizations data for each organization the user is in.
 func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := "user/email"
 
@@ -135,6 +148,8 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*mode
 	return user, nil
 }
 
+// FetchUserMetadataByUsername will fetch a single user by their username. If includeOrgs is true, we'll also
+// fetch the organizations data for each organization the user is in.
 func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error) {
 	urlPostfix := "user/username"
 
@@ -161,6 +176,8 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 }
 
+// FetchBatchUserMetadataByUserIds will fetch all the users with the listed IDS. If includeOrgs is true, we'll
+// also fetch the organizations data for each organization the user is in.
 func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/user_ids"
 
@@ -202,6 +219,8 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 	return users, nil
 }
 
+// FetchBatchUserMetadataByEmails will fetch all the users with the listed emails. If includeOrgs is true, we'll
+// also fetch the organizations data for each organization the user is in.
 func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/emails"
 
@@ -242,6 +261,8 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 	return users, nil
 }
 
+// FetchBatchUserMetadataByUsernames will fetch all the users with the listed usernames. If includeOrgs is true,
+// we'll also fetch the organizations data for each organization the user is in.
 func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*models.UserList, error) {
 	urlPostfix := "user/usernames"
 
@@ -283,6 +304,7 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 	return users, nil
 }
 
+// FetchUsersByQuery will fetch a paged list of users.
 func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error) {
 	urlPostfix := "user/query"
 
@@ -321,6 +343,7 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 
 // public methods to modify a user
 
+// CreateUser will create a new user.
 func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, error) {
 	urlPostfix := "user/"
 
@@ -346,6 +369,8 @@ func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, err
 	return user, nil
 }
 
+// UpdateUserEmail will update a user's email address. if RequireEmailConfirmation is set to true, we'll send
+// out an email to confirm the new email address.
 func (o *Client) UpdateUserEmail(user_id uuid.UUID, params models.UpdateEmail) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/email", user_id)
 
@@ -366,6 +391,8 @@ func (o *Client) UpdateUserEmail(user_id uuid.UUID, params models.UpdateEmail) (
 	return true, nil
 }
 
+// UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
+// that are provided.
 func (o *Client) UpdateUserMetadata(userId uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/metadata", userId)
 
@@ -386,6 +413,7 @@ func (o *Client) UpdateUserMetadata(userId uuid.UUID, params models.UpdateUserMe
 	return true, nil
 }
 
+// UpdateUserPassword will update a user's password. If the user is logged in, they will be logged out.
 func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPasswordParam) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/password", userId)
 
@@ -406,6 +434,7 @@ func (o *Client) UpdateUserPassword(userId uuid.UUID, params models.UpdateUserPa
 	return true, nil
 }
 
+// MigrateUserFromExternalSource will migrate a user from another system.
 func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error) {
 	urlPostfix := "migrate_user/"
 
@@ -426,6 +455,8 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 	return true, nil
 }
 
+// DeleteUser will delete a user, removing them from all organizations they are in. This is a permanent
+// action and cannot be undone. If you're unsure if you want this, use DisableUser instead.
 func (o *Client) DeleteUser(userId uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s", userId)
 
@@ -441,6 +472,7 @@ func (o *Client) DeleteUser(userId uuid.UUID) (bool, error) {
 	return true, nil
 }
 
+// DisableUser will disable a user, preventing them from logging in.
 func (o *Client) DisableUser(userId uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/disable", userId)
 
@@ -456,6 +488,7 @@ func (o *Client) DisableUser(userId uuid.UUID) (bool, error) {
 	return true, nil
 }
 
+// EnableUser will enable a user, meaning they will be allowed to logging in.
 func (o *Client) EnableUser(userId uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/enable", userId)
 
@@ -473,6 +506,7 @@ func (o *Client) EnableUser(userId uuid.UUID) (bool, error) {
 
 // public methods for users in orgs
 
+// FetchUsersInOrg will fetch a paged list of users in an organization.
 func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error) {
 	urlPostfix := fmt.Sprintf("user/org/%s", orgId)
 
@@ -498,6 +532,7 @@ func (o *Client) FetchUsersInOrg(orgId uuid.UUID, params models.UserInOrgQueryPa
 	return users, nil
 }
 
+// AddUserToOrg will add a user to an org with a role.
 func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 	urlPostfix := "org/add_user"
 
@@ -520,6 +555,7 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 
 // public methods for orgs
 
+// FetchOrg will fetch an org's data.
 func (o *Client) FetchOrg(orgId uuid.UUID) (*models.OrgMetadata, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgId)
 
@@ -540,6 +576,7 @@ func (o *Client) FetchOrg(orgId uuid.UUID) (*models.OrgMetadata, error) {
 	return org, nil
 }
 
+// FetchOrgByQuery will fetch a paged list of organizations.
 func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error) {
 	urlPostfix := "org/query"
 
@@ -565,6 +602,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	return orgs, nil
 }
 
+// CreateOrg will an organization and return its data, which is mostly just the org's ID.
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	urlPostfix := "org/"
 
@@ -602,6 +640,7 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	return org, nil
 }
 
+// AllowOrgToSetupSamlConnection will turn on an org's ability to setup a SAML connection.
 func (o *Client) AllowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s/allow_saml", orgId)
 
@@ -617,6 +656,7 @@ func (o *Client) AllowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error) {
 	return true, nil
 }
 
+// DisallowOrgToSetupSamlConnection will turn off an org's ability to setup a SAML connection. This is the default.
 func (o *Client) DisallowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s/disallow_saml", orgId)
 
@@ -634,6 +674,7 @@ func (o *Client) DisallowOrgToSetupSamlConnection(orgId uuid.UUID) (bool, error)
 
 // public methods for misc functionality
 
+// CreateAccessToken creates an access token.
 func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*models.AccessToken, error) {
 	urlPostfix := "access_token"
 
@@ -681,6 +722,7 @@ func (o *Client) CreateAccessToken(userId uuid.UUID, durationInMinutes int) (*mo
 	return accessToken, nil
 }
 
+// CreateMagicLink will create (but not send) a link to let a user sign in without a password.
 func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.CreateMagicLinkResponse, error) {
 	urlPostfix := "magic_link"
 
@@ -708,6 +750,8 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 
 // public methods around authorization
 
+// GetUser will get a user from a JWT token. From there you get orgs the user is in, and validate the user's
+// permissions or roles. See the UserFromToken type for more info.
 func (o *Client) GetUser(authHeader string) (*models.UserFromToken, error) {
 	accessToken, err := o.validationHelper.ExtractTokenFromAuthorizationHeader(authHeader)
 	if err != nil {

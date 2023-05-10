@@ -7,7 +7,8 @@ import (
 	"net/url"
 )
 
-// Queryresponse is the common return type for the HTTP methods below. It structures the normal HTTP response in a way that's convient for us.
+// Queryresponse is the common return type for the HTTP methods below. It structures the normal HTTP response
+// in a way that's convient for us.
 type QueryResponse struct {
 	StatusCode   int
 	ResponseText string

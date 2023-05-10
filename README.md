@@ -1,5 +1,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/propelauth/propelauth-go)](https://goreportcard.com/report/github.com/propelauth/propelauth-go)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/propelauth/propelauth-go.svg)](https://pkg.go.dev/github.com/propelauth/propelauth-go)
+
 # PropelAuth Go SDK
 
 <p align="center">
@@ -8,10 +10,9 @@
   </a>
 </p>
 
-
 A Go library for managing authentication, backed by [PropelAuth](https://www.propelauth.com/?utm_campaign=github-go). 
 
-[PropelAuth](https://www.propelauth.com?ref=github) makes it easy to add authentication and authorization to your B2B/multi-tenant application.
+[PropelAuth](https://www.propelauth.com/?utm_campaign=github-go) makes it easy to add authentication and authorization to your B2B/multi-tenant application.
 
 Your frontend gets a beautiful, safe, and customizable login screen. Your backend gets easy authorization with just a few lines of code. You get an easy-to-use dashboard to config and manage everything.
 
@@ -28,18 +29,11 @@ Your frontend gets a beautiful, safe, and customizable login screen. Your backen
 2. Create a new project.
 3. Go to the **Backend Integrations** section in the dashboard and note the Auth URL and API Key.
 
-
-### Install the PropelAuth Go SDK
+### Your sample program
 
 Make sure you have Go version 1.20.
 
-```sh
-go get github.com/propelauth/propelauth-go-sdk
-```
-
-### Your sample program
-
-Make a new directory, and initialize your program.
+Make a new directory, initialize your program, and get the propelauth-go library.
 
 ```sh
 mkdir propelauth-example
@@ -94,7 +88,7 @@ func main() {
         panic(err)
     }
 
-    fmt.Printf("Created a user with the ID %#v\n", createdUser.UserID)
+    fmt.Printf("Created a user with the ID %v\n", createdUser.UserID)
 
     // fetch the user we just created
 
@@ -103,11 +97,13 @@ func main() {
         panic(err)
     }
 
-    fmt.Printf("Found the user we just created %#v\n", fetchedUser)
+    fmt.Printf("Found the user we just created %#v.\n", fetchedUser)
 }
 ```
 
-Run it.
+Set the two environment variables, PROPELAUTH_API_KEY and PROPELAUTH_AUTH_URL, with those values from the Backend Integrations section on your dashboard.
+
+Finally, run the program.
     
 ```sh
 go run .
@@ -119,5 +115,4 @@ The PropelAuth Go SDK is released under the [MIT license](LICENSE).
 
 ## Questions?
 
-Feel free to reach out at support@propelauth.com
-
+Feel free to reach out at support@propelauth.com. We like answering questions!

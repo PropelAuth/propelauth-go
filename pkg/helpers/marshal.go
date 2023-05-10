@@ -19,6 +19,8 @@ type MarshalHelperInterface interface {
 
 type MarshalHelper struct{}
 
+// TODO these can be removed and replaced with a generic function that takes a pointer to the type
+
 func (o *MarshalHelper) GetUserFromBytes(bytes []byte) (*models.UserID, error) {
 	var user models.UserID
 	if err := json.Unmarshal(bytes, &user); err != nil {
