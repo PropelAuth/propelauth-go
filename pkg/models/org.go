@@ -37,7 +37,6 @@ type UpdateOrg struct {
 	CanSetupSaml     *bool                   `json:"can_setup_saml"`
 	AutojoinByDomain *bool                   `json:"autojoin_by_domain"`
 	RestrictToDomain *bool                   `json:"restrict_to_domain"`
-	Require2FABy     *string                 `json:"require_2fa_by"` // pass in a UTC formatted date, e.g. "2020-01-01T00:00:00Z"
 	MaxUsers         *int                    `json:"max_users"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 }
