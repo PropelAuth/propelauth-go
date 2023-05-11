@@ -2,6 +2,9 @@ package models
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
+	pem "encoding/pem"
+	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -25,15 +28,46 @@ type AccessTokenData struct {
 	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
 }
 
-// Models used when initializing the client
+// Models to hold public key data, that is used when initializing the client.
 
+// TokenVerificationMetadataInput is a public key the user can pass in to initialize the client.
+type TokenVerificationMetadataInput struct {
+	VerifierKey string
+	Issuer      string
+}
+
+// AuthTokenVerificationMetadataResponse is the response from the auth server when getting the public key.
 type AuthTokenVerificationMetadataResponse struct {
 	PublicKeyPem rsa.PublicKey `json:"public_key_pem"`
 }
 
+// TokenVerificationMetadata is the public key data needed to verify a token.
 type TokenVerificationMetadata struct {
 	VerifierKey rsa.PublicKey
 	Issuer      string
+}
+
+// ConvertToTokenVerificationMetadata converts the public key from a string to a rsa.PublicKey, to make a TokenVerificationMetadata struct
+func (o *TokenVerificationMetadataInput) ConvertToTokenVerificationMetadata() (*TokenVerificationMetadata, error) {
+	pemBytes := []byte(o.VerifierKey)
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, fmt.Errorf("Empty block found when decoding PEM block")
+	} else if block.Type != "PUBLIC KEY" {
+		return nil, fmt.Errorf("Wrong block type found when decoding PEM block, expecting PUBLIC KEY, found %s", block.Type)
+	}
+
+	parseResult, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("Error when parsing public key: %w", err)
+	}
+
+	convertedToken := &TokenVerificationMetadata{
+		VerifierKey: *parseResult,
+		Issuer:      o.Issuer,
+	}
+
+	return convertedToken, nil
 }
 
 // Data from token

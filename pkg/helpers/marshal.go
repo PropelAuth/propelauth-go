@@ -42,7 +42,7 @@ func (o *MarshalHelper) GetUserMetadataFromBytes(bytes []byte) (*models.UserMeta
 func (o *MarshalHelper) GetUserListFromBytes(bytes []byte) (*models.UserList, error) {
 	var users models.UserList
 	if err := json.Unmarshal(bytes, &users); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to UserLIst`: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList`: %w", err)
 	}
 
 	return &users, nil

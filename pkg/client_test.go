@@ -13,7 +13,7 @@ func TestInitializations(t *testing.T) {
 
 	_, publicKey := testHelpers.GenerateRSAKeys()
 
-	tokenVerificationMetadata := &models.TokenVerificationMetadata{
+	tokenVerificationMetadataInput := &models.TokenVerificationMetadataInput{
 		VerifierKey: publicKey,
 		Issuer:      "issuertest",
 	}
@@ -21,14 +21,14 @@ func TestInitializations(t *testing.T) {
 	// test initialization
 
 	t.Run("test init with trailing slash fails", func(t *testing.T) {
-		_, err := propelauth.InitBaseAuth("https://auth.example.com/", "apikey", tokenVerificationMetadata)
+		_, err := propelauth.InitBaseAuth("https://auth.example.com/", "apikey", tokenVerificationMetadataInput)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error, but did not")
 		}
 	})
 
 	t.Run("test init with http and not https fails", func(t *testing.T) {
-		_, err := propelauth.InitBaseAuth("http://auth.example.com", "apikey", tokenVerificationMetadata)
+		_, err := propelauth.InitBaseAuth("http://auth.example.com", "apikey", tokenVerificationMetadataInput)
 		if err == nil {
 			t.Errorf("NewClient should have returned an error about https, but did not")
 		}
@@ -54,12 +54,12 @@ func TestValidations(t *testing.T) {
 
 	authHeader := fmt.Sprintf("Bearer %s", accessToken)
 
-	tokenVerificationMetadata := &models.TokenVerificationMetadata{
+	tokenVerificationMetadataInput := &models.TokenVerificationMetadataInput{
 		VerifierKey: publicKey,
 		Issuer:      "issuertest",
 	}
 
-	client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+	client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadataInput)
 	if err != nil {
 		t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
 
@@ -244,12 +244,12 @@ func TestValidations(t *testing.T) {
 
 	t.Run("test basic validation fails With Bad Issuer", func(t *testing.T) {
 		// setup the bad issuer
-		tokenVerificationMetadata := &models.TokenVerificationMetadata{
+		tokenVerificationMetadataInput := &models.TokenVerificationMetadataInput{
 			VerifierKey: publicKey,
 			Issuer:      "newissuertestthatwontmatch",
 		}
 
-		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadataInput)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot continue this test: %s", err)
 
@@ -267,12 +267,12 @@ func TestValidations(t *testing.T) {
 		// generate a client with new random keys
 		_, publicKey := testHelpers.GenerateRSAKeys()
 
-		tokenVerificationMetadata := &models.TokenVerificationMetadata{
+		tokenVerificationMetadataInput := &models.TokenVerificationMetadataInput{
 			VerifierKey: publicKey,
 			Issuer:      "issuertest",
 		}
 
-		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadata)
+		client, err := propelauth.InitBaseAuth("https://auth.example.com", "apikey", tokenVerificationMetadataInput)
 		if err != nil {
 			t.Errorf("NewClient returned an error, cannot even begin the tests: %s", err)
 

@@ -41,11 +41,11 @@ type OrgInfo struct {
 // UserList is a paged list of users. The actual fetched users are in the Users field, and the
 // pagination information is in the other fields.
 type UserList struct {
-	TotalUsers     int      `json:"total_users"`
-	CurrentPage    int      `json:"current_page"`
-	PageSize       int      `json:"page_size"`
-	HasMoreResults bool     `json:"has_more_results"`
-	Users          []UserID `json:"users"`
+	TotalUsers     int            `json:"total_users"`
+	CurrentPage    int            `json:"current_page"`
+	PageSize       int            `json:"page_size"`
+	HasMoreResults bool           `json:"has_more_results"`
+	Users          []UserMetadata `json:"users"`
 }
 
 // post types
@@ -110,5 +110,5 @@ type UserQueryParams struct {
 // UpdateUserPasswordParam is the information needed to update a user's password.
 type UpdateUserPasswordParam struct {
 	Password                       string `json:"password"`
-	AskUserToUpdatePasswordOnLogin *bool  `json:"askUserToUpdatePasswordOnLogin,omitempty"`
+	AskUserToUpdatePasswordOnLogin *bool  `json:"ask_user_to_update_password_on_login,omitempty"`
 }

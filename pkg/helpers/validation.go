@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/propelauth/propelauth-go/pkg/models"
+	models "github.com/propelauth/propelauth-go/pkg/models"
 	"strings"
 )
 

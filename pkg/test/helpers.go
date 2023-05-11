@@ -3,6 +3,8 @@ package test
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	pem "encoding/pem"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/propelauth/propelauth-go/pkg/models"
@@ -78,11 +80,17 @@ func CreateExpiredAccessToken(user models.UserFromToken, privateKeyPem *rsa.Priv
 }
 
 // Generate an RSA key pair.
-func GenerateRSAKeys() (*rsa.PrivateKey, rsa.PublicKey) {
+func GenerateRSAKeys() (*rsa.PrivateKey, string) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 
-	return privateKey, privateKey.PublicKey
+	// convert privateKey.PublicKey to a string, which is what our users are likely to have
+	publicKeyPem := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
+	})
+
+	return privateKey, string(publicKeyPem)
 }

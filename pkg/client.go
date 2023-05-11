@@ -32,7 +32,7 @@ type Client struct {
 //
 // The authURL and apiKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
 // You can pass in a tokenVerificationMetadata if you have it, but it's not required.
-func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadata *models.TokenVerificationMetadata) (*Client, error) {
+func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput *models.TokenVerificationMetadataInput) (*Client, error) {
 	// setup helpers
 	queryHelper := helpers.NewQueryHelper(authURL, backendURLApiPrefix)
 	marshalHelper := &helpers.MarshalHelper{}
@@ -50,8 +50,10 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadata *mode
 		return nil, fmt.Errorf("Invalid URL")
 	}
 
+	var tokenVerificationMetadata *models.TokenVerificationMetadata
+
 	// if tokenVerificationMetadata wasn't passed in, create one
-	if tokenVerificationMetadata == nil {
+	if tokenVerificationMetadataInput == nil {
 		endpointURL := "https://" + url.Host + "/api/v1/token_verification_metadata"
 
 		queryResponse, err := queryHelper.RequestHelper("GET", apiKey, endpointURL, nil)
@@ -80,6 +82,11 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadata *mode
 		tokenVerificationMetadata = &models.TokenVerificationMetadata{
 			VerifierKey: authTokenVerificationMetadataResponse.PublicKeyPem,
 			Issuer:      authURL,
+		}
+	} else {
+		tokenVerificationMetadata, err = tokenVerificationMetadataInput.ConvertToTokenVerificationMetadata()
+		if err != nil {
+			return nil, fmt.Errorf("Error on converting TokenVerificationMetadataInput to TokenVerificationMetadata: %w", err)
 		}
 	}
 
@@ -706,7 +713,7 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int) (*mo
 
 	type CreateAccessToken struct {
 		UserID            uuid.UUID `json:"user_id"`
-		DurationInMinutes int       `json:"durationInMinutes"`
+		DurationInMinutes int       `json:"duration_in_minutes"`
 	}
 
 	bodyParams := CreateAccessToken{
