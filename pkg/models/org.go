@@ -33,12 +33,13 @@ type CreateOrg struct {
 // the fields you set. Note that AutojoinByDomain and RestrictToDomain require a validated domain, which can
 // only be set in your dashboard.
 type UpdateOrg struct {
-	Name             *string `json:"name"`
-	CanSetupSaml     *bool   `json:"can_setup_saml"`
-	AutojoinByDomain *bool   `json:"autojoin_by_domain"`
-	RestrictToDomain *bool   `json:"restrict_to_domain"`
-	Require2FABy     *string `json:"require_2fa_by"` // pass in a UTC formatted date, e.g. "2020-01-01T00:00:00Z"
-	MaxUsers         *int    `json:"max_users"`
+	Name             *string                 `json:"name"`
+	CanSetupSaml     *bool                   `json:"can_setup_saml"`
+	AutojoinByDomain *bool                   `json:"autojoin_by_domain"`
+	RestrictToDomain *bool                   `json:"restrict_to_domain"`
+	Require2FABy     *string                 `json:"require_2fa_by"` // pass in a UTC formatted date, e.g. "2020-01-01T00:00:00Z"
+	MaxUsers         *int                    `json:"max_users"`
+	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize

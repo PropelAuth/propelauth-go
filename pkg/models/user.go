@@ -54,13 +54,14 @@ type UserList struct {
 // If password is missing the will be allowed to create one on their own. Username, Firstname, and Lastname are only
 // used if you have the corresponding settings enabled in your dashboard.
 type CreateUserParams struct {
-	Email                          string  `json:"email"`
-	EmailConfirmed                 *bool   `json:"email_confirmed,omitempty"`
-	SendEmailToConfirmEmailAddress *bool   `json:"send_email_to_confirm_email_address,omitempty"`
-	Password                       *string `json:"password,omitempty"`
-	Username                       *string `json:"username,omitempty"`
-	FirstName                      *string `json:"first_name,omitempty"`
-	LastName                       *string `json:"last_name,omitempty"`
+	Email                          string                  `json:"email"`
+	EmailConfirmed                 *bool                   `json:"email_confirmed,omitempty"`
+	SendEmailToConfirmEmailAddress *bool                   `json:"send_email_to_confirm_email_address,omitempty"`
+	Password                       *string                 `json:"password,omitempty"`
+	Username                       *string                 `json:"username,omitempty"`
+	FirstName                      *string                 `json:"first_name,omitempty"`
+	LastName                       *string                 `json:"last_name,omitempty"`
+	Metadata                       *map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // MigrateUserParams is the information needed to migrate a user from another system. Email is required, but all other
@@ -87,11 +88,12 @@ type UpdateEmail struct {
 // UpdateUserMetadata is the information needed to update a user's metadata. All fields are optional, we'll only update
 // the ones that are provided.
 type UpdateUserMetadata struct {
-	Username               *string `json:"username,omitempty"`
-	FirstName              *string `json:"first_name,omitempty"`
-	LastName               *string `json:"last_name,omitempty"`
-	PictureURL             *string `json:"picture_url,omitempty"`
-	UpdatePasswordRequired *bool   `json:"update_password_required,omitempty"`
+	Username               *string                 `json:"username,omitempty"`
+	FirstName              *string                 `json:"first_name,omitempty"`
+	LastName               *string                 `json:"last_name,omitempty"`
+	PictureURL             *string                 `json:"picture_url,omitempty"`
+	UpdatePasswordRequired *bool                   `json:"update_password_required,omitempty"`
+	Metadata               *map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // UserQueryParams is the information needed to query a pageable list of users. If left blank, PageSize defaults to 10

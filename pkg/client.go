@@ -642,6 +642,28 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	return org, nil
 }
 
+// UpdateOrgMetadata will update properties on an organization. All fields are optional, we'll only update the ones
+// that are provided.
+func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on updating org metadata: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on updating org metadata: %w", err)
+	}
+
+	return true, nil
+}
+
 // AllowOrgToSetupSamlConnection will turn on an org's ability to setup a SAML connection.
 func (o *Client) AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s/allow_saml", orgID)
