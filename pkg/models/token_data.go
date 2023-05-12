@@ -98,8 +98,9 @@ type OrgMemberInfoFromToken struct {
 	OrgID                             uuid.UUID              `json:"org_id"`
 	OrgName                           string                 `json:"org_name"`
 	OrgMetadata                       map[string]interface{} `json:"org_metadata,omitempty"`
-	UserAssignedRole                  string                 `json:"user_assigned_role"`
-	UserInheritedRolesPlusCurrentRole []string               `json:"user_inherited_roles_plus_current_role"`
+	URLSafeOrgName 				      string                 `json:"url_safe_org_name,omitempty"`
+	UserAssignedRole                  string                 `json:"user_role"`
+	UserInheritedRolesPlusCurrentRole []string               `json:"inherited_user_roles_plus_current_role"`
 	UserPermissions                   []string               `json:"user_permissions,omitempty"`
 }
 
