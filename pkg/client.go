@@ -183,7 +183,7 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 // FetchBatchUserMetadataByUserIds will fetch all the users with the listed IDS. If includeOrgs is true, we'll
 // also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*models.UserList, error) {
+func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*[]models.UserMetadata, error) {
 	urlPostfix := "user/user_ids"
 
 	// assemble the parameters
@@ -216,9 +216,9 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 		return nil, fmt.Errorf("Error on fetching batch users by ids: %w", err)
 	}
 
-	users := &models.UserList{}
+	users := &[]models.UserMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
 	return users, nil
@@ -226,7 +226,7 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 
 // FetchBatchUserMetadataByEmails will fetch all the users with the listed emails. If includeOrgs is true, we'll
 // also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*models.UserList, error) {
+func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*[]models.UserMetadata, error) {
 	urlPostfix := "user/emails"
 
 	// assemble the parameters
@@ -235,11 +235,11 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
 
-	type UserIds struct {
+	type UserEmails struct {
 		Emails []string `json:"emails"`
 	}
 
-	bodyParams := UserIds{
+	bodyParams := UserEmails{
 		Emails: emails,
 	}
 
@@ -259,9 +259,9 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 		return nil, fmt.Errorf("Error on fetching batch users by emails: %w", err)
 	}
 
-	users := &models.UserList{}
+	users := &[]models.UserMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
 	return users, nil
@@ -269,7 +269,7 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 
 // FetchBatchUserMetadataByUsernames will fetch all the users with the listed usernames. If includeOrgs is true,
 // we'll also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*models.UserList, error) {
+func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*[]models.UserMetadata, error) {
 	urlPostfix := "user/usernames"
 
 	// assemble the parameters
@@ -278,11 +278,11 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
 
-	type UserIds struct {
+	type UserNames struct {
 		Usernames []string `json:"usernames"`
 	}
 
-	bodyParams := UserIds{
+	bodyParams := UserNames{
 		Usernames: usernames,
 	}
 
@@ -302,9 +302,9 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 		return nil, fmt.Errorf("Error on fetching batch users by usernames: %w", err)
 	}
 
-	users := &models.UserList{}
+	users := &[]models.UserMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
 	return users, nil
