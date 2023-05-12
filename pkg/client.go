@@ -22,7 +22,6 @@ type Client struct {
 	authURL                   string
 	tokenVerificationMetadata models.TokenVerificationMetadata
 	queryHelper               helpers.QueryHelperInterface
-	marshalHelper             helpers.MarshalHelperInterface
 	validationHelper          helpers.ValidationHelperInterface
 }
 
@@ -35,7 +34,6 @@ type Client struct {
 func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput *models.TokenVerificationMetadataInput) (*Client, error) {
 	// setup helpers
 	queryHelper := helpers.NewQueryHelper(authURL, backendURLApiPrefix)
-	marshalHelper := &helpers.MarshalHelper{}
 	validationHelper := &helpers.ValidationHelper{}
 
 	// validate the authURL
@@ -74,8 +72,8 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 			}
 		}
 
-		authTokenVerificationMetadataResponse, err := marshalHelper.GetAuthTokenVerificationMetadataResponseFromBytes(queryResponse.BodyBytes)
-		if err != nil {
+		authTokenVerificationMetadataResponse := &models.AuthTokenVerificationMetadataResponse{}
+		if err := json.Unmarshal(queryResponse.BodyBytes, authTokenVerificationMetadataResponse); err != nil {
 			return nil, fmt.Errorf("Error on unmarshalling bytes to AuthTokenVerificationMetadataResponse: %w", err)
 		}
 
@@ -95,7 +93,6 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 		authURL:                   authURL,
 		tokenVerificationMetadata: *tokenVerificationMetadata,
 		queryHelper:               queryHelper,
-		marshalHelper:             marshalHelper,
 		validationHelper:          validationHelper,
 	}
 
@@ -122,8 +119,8 @@ func (o *Client) FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (
 		return nil, fmt.Errorf("Error on fetching user by id: %w", err)
 	}
 
-	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	user := &models.UserMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, user); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
@@ -149,8 +146,8 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*mode
 		return nil, fmt.Errorf("Error on fetching user by email: %w", err)
 	}
 
-	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	user := &models.UserMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, user); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
@@ -176,8 +173,8 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 		return nil, fmt.Errorf("Error on fetching user by username: %w", err)
 	}
 
-	user, err := o.marshalHelper.GetUserMetadataFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	user := &models.UserMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, user); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
 	}
 
@@ -219,8 +216,8 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 		return nil, fmt.Errorf("Error on fetching batch users by ids: %w", err)
 	}
 
-	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	users := &models.UserList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
@@ -262,8 +259,8 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 		return nil, fmt.Errorf("Error on fetching batch users by emails: %w", err)
 	}
 
-	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	users := &models.UserList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
@@ -305,8 +302,8 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 		return nil, fmt.Errorf("Error on fetching batch users by usernames: %w", err)
 	}
 
-	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	users := &models.UserList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
@@ -342,8 +339,8 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 		return nil, fmt.Errorf("Error on fetching users by query: %w", err)
 	}
 
-	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	users := &models.UserList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
@@ -370,8 +367,8 @@ func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, err
 		return nil, fmt.Errorf("Error on creating user: %w", err)
 	}
 
-	user, err := o.marshalHelper.GetUserFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	user := &models.UserID{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, user); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserID: %w", err)
 	}
 
@@ -533,8 +530,8 @@ func (o *Client) FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryPa
 		return nil, fmt.Errorf("Error on fetching users in org: %w", err)
 	}
 
-	users, err := o.marshalHelper.GetUserListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	users := &models.UserList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, users); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to UserList: %w", err)
 	}
 
@@ -577,8 +574,8 @@ func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error) {
 		return nil, fmt.Errorf("Error on fetching org: %w", err)
 	}
 
-	org, err := o.marshalHelper.GetOrgMetadataFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	org := &models.OrgMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
 	}
 
@@ -603,8 +600,8 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 		return nil, fmt.Errorf("Error on fetching orgs by query: %w", err)
 	}
 
-	orgs, err := o.marshalHelper.GetOrgListFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	orgs := &models.OrgList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, orgs); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgList: %w", err)
 	}
 
@@ -641,8 +638,8 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 		return nil, fmt.Errorf("Error on creating org: %w", err)
 	}
 
-	org, err := o.marshalHelper.GetOrgMetadataFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	org := &models.OrgMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
 	}
 
@@ -748,8 +745,8 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int) (*mo
 		}
 	}
 
-	accessToken, err := o.marshalHelper.GetAccessTokenFromBytes(queryResponse.BodyBytes)
-	if err != nil {
+	accessToken := &models.AccessToken{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, accessToken); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to AccessToken: %w", err)
 	}
 
@@ -774,9 +771,9 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 		return nil, fmt.Errorf("Error on creating magic link: %w", err)
 	}
 
-	magicLink, err := o.marshalHelper.GetMagicLinkResponseFromBytes(queryResponse.BodyBytes)
-	if err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to MagicLinkResponse: %w", err)
+	magicLink := &models.CreateMagicLinkResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, magicLink); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CreateMagicLinkResponse: %w", err)
 	}
 
 	return magicLink, nil

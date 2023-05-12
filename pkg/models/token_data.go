@@ -30,7 +30,7 @@ type AccessTokenData struct {
 
 // Models to hold public key data, that is used when initializing the client.
 
-// TokenVerificationMetadataInput is a public key the user can pass in to initialize the client.
+// TokenVerificationMetadataInput is a public key type the user can pass in to initialize the client. The public key is a string.
 type TokenVerificationMetadataInput struct {
 	VerifierKey string
 	Issuer      string
@@ -41,7 +41,7 @@ type AuthTokenVerificationMetadataResponse struct {
 	PublicKeyPem rsa.PublicKey `json:"public_key_pem"`
 }
 
-// TokenVerificationMetadata is the public key data needed to verify a token.
+// TokenVerificationMetadata is the public key type we use internally.
 type TokenVerificationMetadata struct {
 	VerifierKey rsa.PublicKey
 	Issuer      string
@@ -98,7 +98,7 @@ type OrgMemberInfoFromToken struct {
 	OrgID                             uuid.UUID              `json:"org_id"`
 	OrgName                           string                 `json:"org_name"`
 	OrgMetadata                       map[string]interface{} `json:"org_metadata,omitempty"`
-	URLSafeOrgName 				      string                 `json:"url_safe_org_name,omitempty"`
+	URLSafeOrgName                    string                 `json:"url_safe_org_name,omitempty"`
 	UserAssignedRole                  string                 `json:"user_role"`
 	UserInheritedRolesPlusCurrentRole []string               `json:"inherited_user_roles_plus_current_role"`
 	UserPermissions                   []string               `json:"user_permissions,omitempty"`
