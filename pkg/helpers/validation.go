@@ -4,6 +4,9 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"crypto/rsa"
+	"crypto/x509"
+	pem "encoding/pem"
 	jwt "github.com/golang-jwt/jwt/v5"
 	models "github.com/propelauth/propelauth-go/pkg/models"
 	"strings"
@@ -12,6 +15,7 @@ import (
 type ValidationHelperInterface interface {
 	ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error)
 	ExtractTokenFromAuthorizationHeader(authHeader string) (string, error)
+	ConvertPEMStringToRSAPublicKey(pemString string) (*rsa.PublicKey, error)
 }
 
 type ValidationHelper struct{}
@@ -58,4 +62,31 @@ func (o *ValidationHelper) ExtractTokenFromAuthorizationHeader(authHeader string
 	}
 
 	return split[1], nil
+}
+
+// ConvertToTokenVerificationMetadata converts the public key from a string to a rsa.PublicKey, to make a TokenVerificationMetadata struct
+func (o *ValidationHelper) ConvertPEMStringToRSAPublicKey(pemString string) (*rsa.PublicKey, error) {
+	pemBytes := []byte(pemString)
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, fmt.Errorf("Empty block found when decoding PEM block")
+	} else if block.Type != "PUBLIC KEY" {
+		return nil, fmt.Errorf("Wrong block type found when decoding PEM block, expecting PUBLIC KEY, found %s", block.Type)
+	}
+
+	// TODO: There's got to be a better way to do this
+
+	// first try PKCS1
+	parseResult, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err == nil {
+		return parseResult, nil
+	}
+
+	// then try PKIX
+	parseResult2, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err == nil {
+		return parseResult2.(*rsa.PublicKey), nil
+	}
+
+	return nil, fmt.Errorf("Error when parsing public key: %w", err)
 }

@@ -77,14 +77,24 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 			return nil, fmt.Errorf("Error on unmarshalling bytes to AuthTokenVerificationMetadataResponse: %w", err)
 		}
 
+		rsaPublicKey, err := validationHelper.ConvertPEMStringToRSAPublicKey(authTokenVerificationMetadataResponse.VerifierKeyPem)
+		if err != nil {
+			return nil, fmt.Errorf("Error converting a PEM string to an RSA Public Key: %w", err)
+		}
+
 		tokenVerificationMetadata = &models.TokenVerificationMetadata{
-			VerifierKey: authTokenVerificationMetadataResponse.PublicKeyPem,
+			VerifierKey: *rsaPublicKey,
 			Issuer:      authURL,
 		}
 	} else {
-		tokenVerificationMetadata, err = tokenVerificationMetadataInput.ConvertToTokenVerificationMetadata()
+		rsaPublicKey, err := validationHelper.ConvertPEMStringToRSAPublicKey(tokenVerificationMetadataInput.VerifierKey)
 		if err != nil {
-			return nil, fmt.Errorf("Error on converting TokenVerificationMetadataInput to TokenVerificationMetadata: %w", err)
+			return nil, fmt.Errorf("Error converting a PEM string to an RSA Public Key: %w", err)
+		}
+
+		tokenVerificationMetadata = &models.TokenVerificationMetadata{
+			VerifierKey: *rsaPublicKey,
+			Issuer:      tokenVerificationMetadataInput.Issuer,
 		}
 	}
 
@@ -183,7 +193,7 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 // FetchBatchUserMetadataByUserIds will fetch all the users with the listed IDS. If includeOrgs is true, we'll
 // also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs bool) (*[]models.UserMetadata, error) {
+func (o *Client) FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrgs bool) (*[]models.UserMetadata, error) {
 	urlPostfix := "user/user_ids"
 
 	// assemble the parameters
@@ -193,7 +203,7 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []string, includeOrgs b
 	}
 
 	type UserIds struct {
-		UserIds []string `json:"user_ids"`
+		UserIds []uuid.UUID `json:"user_ids"`
 	}
 
 	bodyParams := UserIds{
@@ -317,8 +327,11 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 	// there's probably a better way to do this
 	queryParams := url.Values{}
 
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
 	if params.PageSize != nil {
-		queryParams.Add("page_number", strconv.Itoa(*params.PageSize))
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
 	}
 	if params.OrderBy != nil {
 		queryParams.Add("order_by", *params.OrderBy)

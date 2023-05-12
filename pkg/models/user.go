@@ -28,7 +28,7 @@ type UserMetadata struct {
 	CreatedAt      int64              `json:"created_at"`
 	LastActiveAt   int64              `json:"last_active_at"`
 	LegacyUserID   string             `json:"legacy_user_id"`
-	OrgIDToOrgInfo map[string]OrgInfo `json:"org_id_to_org_info"`
+	OrgIDToOrgInfo map[uuid.UUID]OrgInfo `json:"org_id_to_org_info"`
 }
 
 // OrgInfo is the information about an organization a user is in.
