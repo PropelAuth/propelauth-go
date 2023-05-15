@@ -18,7 +18,7 @@ Your frontend gets a beautiful, safe, and customizable login screen. Your backen
 
 ## Documentation
 
-- [Full reference for this library (coming soon)](https://docs.propelauth.com/reference/backend-apis/go)
+- [Full reference for this library](https://docs.propelauth.com/reference/backend-apis/go)
 - [Getting started guides for PropelAuth](https://docs.propelauth.com/)
 
 ## Creating your first program with the PropelAuth Go SDK
