@@ -18,11 +18,11 @@ type AccessTokenResponse struct {
 }
 
 type AccessTokenData struct {
-	AccessToken          string                            `json:"access_token"`
-	ExpiresAtSeconds     int64                             `json:"expires_at_seconds"`
-	OrgIDToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
-	User                 UserMetadata                      `json:"user"`
-	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
+	AccessToken          string                             `json:"access_token"`
+	ExpiresAtSeconds     int64                              `json:"expires_at_seconds"`
+	OrgIDToOrgMemberInfo *map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	User                 UserMetadata                       `json:"user"`
+	ImpersonatorUser     *UserID                            `json:"impersonator_user,omitempty"`
 }
 
 // Models to hold public key data, that is used when initializing the client.
@@ -107,8 +107,6 @@ func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 
 // HasAllPermissions returns true if the user has all of the permissions.
 func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
-	// turn o.UserPermissions into a set, and iterate over it once
-
 	permissionsSet := make(map[string]bool)
 	for _, p := range o.UserPermissions {
 		permissionsSet[p] = true

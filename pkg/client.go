@@ -335,7 +335,7 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 
 	userMap := map[string]models.UserMetadata{}
 	for _, user := range *users {
-		userMap[user.Username] = user
+		userMap[*user.Username] = user
 	}
 
 	return userMap, nil

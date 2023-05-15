@@ -14,21 +14,21 @@ type UserID struct {
 
 // UserMetadata is all the information about a specific user.
 type UserMetadata struct {
-	UserID         uuid.UUID             `json:"user_id"`
-	Email          string                `json:"email"`
-	EmailConfirmed bool                  `json:"email_confirmed"`
-	HasPassword    bool                  `json:"has_password"`
-	Username       string                `json:"username"`
-	FirstName      string                `json:"first_name"`
-	LastName       string                `json:"last_name"`
-	PictureURL     string                `json:"picture_url"`
-	Locked         bool                  `json:"locked"`
-	Enabled        bool                  `json:"enabled"`
-	MFAEnabled     bool                  `json:"mfa_enabled"`
-	CreatedAt      int64                 `json:"created_at"`
-	LastActiveAt   int64                 `json:"last_active_at"`
-	LegacyUserID   string                `json:"legacy_user_id"`
-	OrgIDToOrgInfo map[uuid.UUID]OrgInfo `json:"org_id_to_org_info"`
+	UserID         uuid.UUID              `json:"user_id"`
+	Email          string                 `json:"email"`
+	EmailConfirmed bool                   `json:"email_confirmed"`
+	HasPassword    bool                   `json:"has_password"`
+	Username       *string                `json:"username"`
+	FirstName      *string                `json:"first_name"`
+	LastName       *string                `json:"last_name"`
+	PictureURL     *string                `json:"picture_url"`
+	Locked         bool                   `json:"locked"`
+	Enabled        bool                   `json:"enabled"`
+	MFAEnabled     bool                   `json:"mfa_enabled"`
+	CreatedAt      int64                  `json:"created_at"`
+	LastActiveAt   int64                  `json:"last_active_at"`
+	LegacyUserID   *string                `json:"legacy_user_id"`
+	OrgIDToOrgInfo *map[uuid.UUID]OrgInfo `json:"org_id_to_org_info"`
 }
 
 // OrgInfo is the information about an organization a user is in.
