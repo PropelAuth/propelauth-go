@@ -2,11 +2,11 @@
 package helpers
 
 import (
-	"errors"
-	"fmt"
 	"crypto/rsa"
 	"crypto/x509"
 	pem "encoding/pem"
+	"errors"
+	"fmt"
 	jwt "github.com/golang-jwt/jwt/v5"
 	models "github.com/propelauth/propelauth-go/pkg/models"
 	"strings"

@@ -193,7 +193,7 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 
 // FetchBatchUserMetadataByUserIds will fetch all the users with the listed IDS. If includeOrgs is true, we'll
 // also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrgs bool) (*[]models.UserMetadata, error) {
+func (o *Client) FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrgs bool) (map[uuid.UUID]models.UserMetadata, error) {
 	urlPostfix := "user/user_ids"
 
 	// assemble the parameters
@@ -231,12 +231,19 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrg
 		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
-	return users, nil
+	// assemble the return
+
+	userMap := map[uuid.UUID]models.UserMetadata{}
+	for _, user := range *users {
+		userMap[user.UserID] = user
+	}
+
+	return userMap, nil
 }
 
 // FetchBatchUserMetadataByEmails will fetch all the users with the listed emails. If includeOrgs is true, we'll
 // also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (*[]models.UserMetadata, error) {
+func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (map[string]models.UserMetadata, error) {
 	urlPostfix := "user/emails"
 
 	// assemble the parameters
@@ -274,12 +281,19 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
-	return users, nil
+	// assemble the return
+
+	userMap := map[string]models.UserMetadata{}
+	for _, user := range *users {
+		userMap[user.Email] = user
+	}
+
+	return userMap, nil
 }
 
 // FetchBatchUserMetadataByUsernames will fetch all the users with the listed usernames. If includeOrgs is true,
 // we'll also fetch the organizations data for each organization the user is in.
-func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (*[]models.UserMetadata, error) {
+func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (map[string]models.UserMetadata, error) {
 	urlPostfix := "user/usernames"
 
 	// assemble the parameters
@@ -317,14 +331,20 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 		return nil, fmt.Errorf("Error on unmarshalling bytes to []UserMetadata: %w", err)
 	}
 
-	return users, nil
+	// assemble the return
+
+	userMap := map[string]models.UserMetadata{}
+	for _, user := range *users {
+		userMap[user.Username] = user
+	}
+
+	return userMap, nil
 }
 
 // FetchUsersByQuery will fetch a paged list of users.
 func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error) {
 	urlPostfix := "user/query"
 
-	// there's probably a better way to do this
 	queryParams := url.Values{}
 
 	if params.PageNumber != nil {
@@ -398,7 +418,7 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user email: %w", err)
 	}
@@ -413,14 +433,14 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 // UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
 // that are provided.
 func (o *Client) UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
-	urlPostfix := fmt.Sprintf("user/%s/metadata", userID)
+	urlPostfix := fmt.Sprintf("user/%s", userID)
 
 	bodyJSON, err := json.Marshal(params)
 	if err != nil {
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user metadata: %w", err)
 	}
@@ -441,7 +461,7 @@ func (o *Client) UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPa
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user password: %w", err)
 	}
@@ -529,12 +549,19 @@ func (o *Client) EnableUser(userID uuid.UUID) (bool, error) {
 func (o *Client) FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error) {
 	urlPostfix := fmt.Sprintf("user/org/%s", orgID)
 
-	bodyJSON, err := json.Marshal(params)
-	if err != nil {
-		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	queryParams := url.Values{}
+
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
+	if params.PageSize != nil {
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
+	}
+	if params.IncludeOrgs != nil {
+		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching users in org: %w", err)
 	}
@@ -669,7 +696,7 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating org metadata: %w", err)
 	}

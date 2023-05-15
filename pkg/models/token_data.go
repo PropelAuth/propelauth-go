@@ -107,19 +107,15 @@ func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 
 // HasAllPermissions returns true if the user has all of the permissions.
 func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
-	// TODO - ridiculously not efficient
+	// turn o.UserPermissions into a set, and iterate over it once
+
+	permissionsSet := make(map[string]bool)
+	for _, p := range o.UserPermissions {
+		permissionsSet[p] = true
+	}
+
 	for _, permission := range permissions {
-		found := false
-
-		for _, p := range o.UserPermissions {
-			if permission == p {
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
+		if !permissionsSet[permission] {
 			return false
 		}
 	}

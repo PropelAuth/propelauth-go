@@ -14,20 +14,20 @@ type UserID struct {
 
 // UserMetadata is all the information about a specific user.
 type UserMetadata struct {
-	UserID         uuid.UUID          `json:"user_id"`
-	Email          string             `json:"email"`
-	EmailConfirmed bool               `json:"email_confirmed"`
-	HasPassword    bool               `json:"has_password"`
-	Username       string             `json:"username"`
-	FirstName      string             `json:"first_name"`
-	LastName       string             `json:"last_name"`
-	PictureURL     string             `json:"picture_url"`
-	Locked         bool               `json:"locked"`
-	Enabled        bool               `json:"enabled"`
-	MFAEnabled     bool               `json:"mfa_enabled"`
-	CreatedAt      int64              `json:"created_at"`
-	LastActiveAt   int64              `json:"last_active_at"`
-	LegacyUserID   string             `json:"legacy_user_id"`
+	UserID         uuid.UUID             `json:"user_id"`
+	Email          string                `json:"email"`
+	EmailConfirmed bool                  `json:"email_confirmed"`
+	HasPassword    bool                  `json:"has_password"`
+	Username       string                `json:"username"`
+	FirstName      string                `json:"first_name"`
+	LastName       string                `json:"last_name"`
+	PictureURL     string                `json:"picture_url"`
+	Locked         bool                  `json:"locked"`
+	Enabled        bool                  `json:"enabled"`
+	MFAEnabled     bool                  `json:"mfa_enabled"`
+	CreatedAt      int64                 `json:"created_at"`
+	LastActiveAt   int64                 `json:"last_active_at"`
+	LegacyUserID   string                `json:"legacy_user_id"`
 	OrgIDToOrgInfo map[uuid.UUID]OrgInfo `json:"org_id_to_org_info"`
 }
 
@@ -77,6 +77,7 @@ type MigrateUserParams struct {
 	Username                       *string `json:"username,omitempty"`
 	FirstName                      *string `json:"first_name,omitempty"`
 	LastName                       *string `json:"last_name,omitempty"`
+	UpdatePasswordRequired         *bool   `json:"update_password_required,omitempty"`
 }
 
 // UpdateEmailParams is the information needed to update a user's email address.
