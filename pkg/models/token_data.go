@@ -18,11 +18,11 @@ type AccessTokenResponse struct {
 }
 
 type AccessTokenData struct {
-	AccessToken          string                            `json:"access_token"`
-	ExpiresAtSeconds     int64                             `json:"expires_at_seconds"`
+	AccessToken          string                             `json:"access_token"`
+	ExpiresAtSeconds     int64                              `json:"expires_at_seconds"`
 	OrgIDToOrgMemberInfo map[string]OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
-	User                 UserMetadata                      `json:"user"`
-	ImpersonatorUser     UserID                            `json:"impersonator_user,omitempty"`
+	User                 UserMetadata                       `json:"user"`
+	ImpersonatorUser     *UserID                            `json:"impersonator_user,omitempty"`
 }
 
 // Models to hold public key data, that is used when initializing the client.
@@ -55,8 +55,8 @@ type UserAndOrgMemberInfoFromToken struct {
 // UserFromToken is the user data from the JWT.
 type UserFromToken struct {
 	UserID               uuid.UUID                          `json:"user_id"`
-	LegacyUserID         string                             `json:"legacy_user_id,omitempty"`
-	ImpersonatorUserID   uuid.UUID                          `json:"impersonator_user_id,omitempty"`
+	LegacyUserID         *string                             `json:"legacy_user_id,omitempty"`
+	ImpersonatorUserID   *uuid.UUID                          `json:"impersonator_user_id,omitempty"`
 	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	jwt.RegisteredClaims
@@ -107,19 +107,13 @@ func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
 
 // HasAllPermissions returns true if the user has all of the permissions.
 func (o *OrgMemberInfoFromToken) HasAllPermissions(permissions []string) bool {
-	// TODO - ridiculously not efficient
+	permissionsSet := make(map[string]bool)
+	for _, p := range o.UserPermissions {
+		permissionsSet[p] = true
+	}
+
 	for _, permission := range permissions {
-		found := false
-
-		for _, p := range o.UserPermissions {
-			if permission == p {
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
+		if !permissionsSet[permission] {
 			return false
 		}
 	}
