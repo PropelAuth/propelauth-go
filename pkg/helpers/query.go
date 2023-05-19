@@ -19,6 +19,7 @@ type QueryResponse struct {
 // Interface for the QueryHelper.
 type QueryHelperInterface interface {
 	Get(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
+	Patch(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 	Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 	Put(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 	Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
@@ -42,6 +43,12 @@ func (o *QueryHelper) Get(token string, urlPostfix string, queryParams url.Value
 	url := o.assembleURL(urlPostfix, queryParams)
 
 	return o.RequestHelper("GET", token, url, nil)
+}
+
+func (o *QueryHelper) Patch(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error) {
+	url := o.assembleURL(urlPostfix, queryParams)
+
+	return o.RequestHelper("PATCH", token, url, bodyParams)
 }
 
 func (o *QueryHelper) Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error) {

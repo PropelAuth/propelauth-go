@@ -14,21 +14,23 @@ type UserID struct {
 
 // UserMetadata is all the information about a specific user.
 type UserMetadata struct {
-	UserID         uuid.UUID              `json:"user_id"`
-	Email          string                 `json:"email"`
-	EmailConfirmed bool                   `json:"email_confirmed"`
-	HasPassword    bool                   `json:"has_password"`
-	Username       *string                `json:"username"`
-	FirstName      *string                `json:"first_name"`
-	LastName       *string                `json:"last_name"`
-	PictureURL     *string                `json:"picture_url"`
-	Locked         bool                   `json:"locked"`
-	Enabled        bool                   `json:"enabled"`
-	MFAEnabled     bool                   `json:"mfa_enabled"`
-	CreatedAt      int64                  `json:"created_at"`
-	LastActiveAt   int64                  `json:"last_active_at"`
-	LegacyUserID   *string                `json:"legacy_user_id"`
-	OrgIDToOrgInfo *map[uuid.UUID]OrgInfo `json:"org_id_to_org_info"`
+	UserID         uuid.UUID               `json:"user_id"`
+	Email          string                  `json:"email"`
+	EmailConfirmed bool                    `json:"email_confirmed"`
+	HasPassword    bool                    `json:"has_password"`
+	Username       *string                 `json:"username"`
+	FirstName      *string                 `json:"first_name"`
+	LastName       *string                 `json:"last_name"`
+	PictureURL     *string                 `json:"picture_url"`
+	Locked         bool                    `json:"locked"`
+	Enabled        bool                    `json:"enabled"`
+	MFAEnabled     bool                    `json:"mfa_enabled"`
+	CanCreateOrgs  bool                    `json:"can_create_org"`
+	CreatedAt      int64                   `json:"created_at"`
+	LastActiveAt   int64                   `json:"last_active_at"`
+	LegacyUserID   *string                 `json:"legacy_user_id"`
+	OrgIDToOrgInfo *map[uuid.UUID]OrgInfo  `json:"org_id_to_org_info"`
+	Metadata       *map[string]interface{} `json:"metadata"`
 }
 
 // OrgInfo is the information about an organization a user is in.
@@ -61,6 +63,7 @@ type CreateUserParams struct {
 	Username                       *string                 `json:"username,omitempty"`
 	FirstName                      *string                 `json:"first_name,omitempty"`
 	LastName                       *string                 `json:"last_name,omitempty"`
+	CanCreateOrgs                  *bool                   `json:"can_create_orgs,omitempty"`
 	Metadata                       *map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -94,6 +97,7 @@ type UpdateUserMetadata struct {
 	LastName               *string                 `json:"last_name,omitempty"`
 	PictureURL             *string                 `json:"picture_url,omitempty"`
 	UpdatePasswordRequired *bool                   `json:"update_password_required,omitempty"`
+	CanCreateOrgs          *bool                   `json:"can_create_orgs,omitempty"`
 	Metadata               *map[string]interface{} `json:"metadata,omitempty"`
 }
 
