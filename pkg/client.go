@@ -15,23 +15,72 @@ import (
 
 const backendURLApiPrefix = "/api/backend/v1/"
 
+// ClientInterface contains all the methods for interacting with the PropelAuth backend and the JWT.
+// It's also a convient listing of all the methods available to the integration programmer.
+type ClientInterface interface {
+	// user endpoints
+	CreateAccessToken(userID uuid.UUID, durationInMinutes int) (*models.AccessToken, error)
+	CreateMagicLink(params models.CreateMagicLinkParams) (*models.CreateMagicLinkResponse, error)
+	CreateUser(params models.CreateUserParams) (*models.UserID, error)
+	DeleteUser(userID uuid.UUID) (bool, error)
+	DisableUser(userID uuid.UUID) (bool, error)
+	EnableUser(userID uuid.UUID) (bool, error)
+	FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (map[string]models.UserMetadata, error)
+	FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrgs bool) (map[uuid.UUID]models.UserMetadata, error)
+	FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (map[string]models.UserMetadata, error)
+	FetchUserMetadataByEmail(email string, includeOrgs bool) (*models.UserMetadata, error)
+	FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (*models.UserMetadata, error)
+	FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error)
+	FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error)
+	MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error)
+	UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (bool, error)
+	UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMetadata) (bool, error)
+	UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error)
+	EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
+	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
+
+	// org endpoints
+	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
+	CreateOrg(name string) (*models.OrgMetadata, error)
+	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
+	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
+	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
+	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+
+	// user in org endpoints
+	AddUserToOrg(params models.AddUserToOrg) (bool, error)
+	FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error)
+
+	// api key endpoints
+	FetchAPIKey(apiKeyID string) (*models.APIKeyFull, error)
+	CreateAPIKey(params models.APIKeyCreateParams) (*models.APIKeyNew, error)
+	UpdateAPIKey(apiKeyID string, params models.APIKeyUpdateParams) (bool, error)
+	DeleteAPIKey(apiKeyID string) (bool, error)
+	FetchCurrentAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error)
+	FetchArchivedAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error)
+	ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
+
+	// a method to validate the JWT
+	GetUser(authHeader string) (*models.UserFromToken, error)
+}
+
 // Client is the main struct for the PropelAuth Go library. It contains all the methods for interacting with the
 // PropelAuth backend.
 type Client struct {
-	apiKey                    string
+	integrationAPIKey         string
 	authURL                   string
 	tokenVerificationMetadata models.TokenVerificationMetadata
 	queryHelper               helpers.QueryHelperInterface
 	validationHelper          helpers.ValidationHelperInterface
 }
 
-// InitBaseAuth initializes the PropelAuth client with the authURL, apiKey.
+// InitBaseAuth initializes the PropelAuth client with the authURL, integrationAPIKey.
 //
 // This is the normal entrance to accessing the PropelAuth backend.
 //
-// The authURL and apiKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
+// The authURL and integrationAPIKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
 // You can pass in a tokenVerificationMetadata if you have it, but it's not required.
-func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput *models.TokenVerificationMetadataInput) (*Client, error) {
+func InitBaseAuth(authURL string, integrationAPIKey string, tokenVerificationMetadataInput *models.TokenVerificationMetadataInput) (ClientInterface, error) {
 	// setup helpers
 	queryHelper := helpers.NewQueryHelper(authURL, backendURLApiPrefix)
 	validationHelper := &helpers.ValidationHelper{}
@@ -54,7 +103,7 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 	if tokenVerificationMetadataInput == nil {
 		endpointURL := "https://" + url.Host + "/api/v1/token_verification_metadata"
 
-		queryResponse, err := queryHelper.RequestHelper("GET", apiKey, endpointURL, nil)
+		queryResponse, err := queryHelper.RequestHelper("GET", integrationAPIKey, endpointURL, nil)
 		if err != nil {
 			return nil, fmt.Errorf("Error on fetching token verification metadata: %w", err)
 		}
@@ -62,7 +111,7 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 		if queryResponse.StatusCode != 200 {
 			switch statusCode := queryResponse.StatusCode; statusCode {
 			case 401:
-				return nil, fmt.Errorf("apiKey is incorrect")
+				return nil, fmt.Errorf("integrationAPIKey is incorrect")
 			case 400:
 				return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
 			case 404:
@@ -99,7 +148,7 @@ func InitBaseAuth(authURL string, apiKey string, tokenVerificationMetadataInput 
 	}
 
 	client := &Client{
-		apiKey:                    apiKey,
+		integrationAPIKey:         integrationAPIKey,
 		authURL:                   authURL,
 		tokenVerificationMetadata: *tokenVerificationMetadata,
 		queryHelper:               queryHelper,
@@ -120,7 +169,7 @@ func (o *Client) FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching user by id: %w", err)
 	}
@@ -147,7 +196,7 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*mode
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching user by email: %w", err)
 	}
@@ -174,7 +223,7 @@ func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) 
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
 	}
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching user by username: %w", err)
 	}
@@ -217,7 +266,7 @@ func (o *Client) FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrg
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching batch users by ids: %w", err)
 	}
@@ -267,7 +316,7 @@ func (o *Client) FetchBatchUserMetadataByEmails(emails []string, includeOrgs boo
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching batch users by emails: %w", err)
 	}
@@ -317,7 +366,7 @@ func (o *Client) FetchBatchUserMetadataByUsernames(usernames []string, includeOr
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, queryParams, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, queryParams, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching batch users by usernames: %w", err)
 	}
@@ -363,7 +412,7 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
 	}
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching users by query: %w", err)
 	}
@@ -391,7 +440,7 @@ func (o *Client) CreateUser(params models.CreateUserParams) (*models.UserID, err
 		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on creating user: %w", err)
 	}
@@ -418,7 +467,7 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user email: %w", err)
 	}
@@ -440,7 +489,7 @@ func (o *Client) UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMe
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user metadata: %w", err)
 	}
@@ -461,7 +510,7 @@ func (o *Client) UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPa
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating user password: %w", err)
 	}
@@ -482,7 +531,7 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on migrating user: %w", err)
 	}
@@ -499,7 +548,7 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 func (o *Client) DeleteUser(userID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s", userID)
 
-	queryResponse, err := o.queryHelper.Delete(o.apiKey, urlPostfix, nil)
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on deleting user: %w", err)
 	}
@@ -515,7 +564,7 @@ func (o *Client) DeleteUser(userID uuid.UUID) (bool, error) {
 func (o *Client) DisableUser(userID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/disable", userID)
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on disabling user: %w", err)
 	}
@@ -531,13 +580,45 @@ func (o *Client) DisableUser(userID uuid.UUID) (bool, error) {
 func (o *Client) EnableUser(userID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s/enable", userID)
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on enabling user: %w", err)
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on enabling user: %w", err)
+	}
+
+	return true, nil
+}
+
+// EnableUserCanCreateOrgs will let a user create orgs even when the global users_can_create_orgs is set to false.
+func (o *Client) EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/can_create_orgs/enable", userID)
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on enable user can create orgs: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on enable user can create orgs: %w", err)
+	}
+
+	return true, nil
+}
+
+// DisableUserCanCreateOrgs will prevent a user from creating orgs, unless the global users_can_create_orgs is set to true.
+func (o *Client) DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/can_create_orgs/disable", userID)
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on disable user can create orgs: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on disable user can create orgs: %w", err)
 	}
 
 	return true, nil
@@ -561,7 +642,7 @@ func (o *Client) FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryPa
 		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
 	}
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, queryParams)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching users in org: %w", err)
 	}
@@ -587,7 +668,7 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on adding user to org: %w", err)
 	}
@@ -605,7 +686,7 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgID)
 
-	queryResponse, err := o.queryHelper.Get(o.apiKey, urlPostfix, nil)
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching org: %w", err)
 	}
@@ -631,7 +712,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching orgs by query: %w", err)
 	}
@@ -669,7 +750,7 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on creating org: %w", err)
 	}
@@ -696,7 +777,7 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Put(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("Error on updating org metadata: %w", err)
 	}
@@ -712,7 +793,7 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 func (o *Client) AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s/allow_saml", orgID)
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on allowing org to setup SAML connection: %w", err)
 	}
@@ -728,7 +809,7 @@ func (o *Client) AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
 func (o *Client) DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s/disallow_saml", orgID)
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, nil)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on disallowing org to setup SAML connection: %w", err)
 	}
@@ -738,6 +819,211 @@ func (o *Client) DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	}
 
 	return true, nil
+}
+
+// public methods for managing API Keys
+
+func (o *Client) FetchAPIKey(apiKeyID string) (*models.APIKeyFull, error) {
+	urlPostfix := fmt.Sprintf("end_user_api_keys/%s", apiKeyID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching an API key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching an API key: %w", err)
+	}
+
+	apiKey := &models.APIKeyFull{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKey); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyFull: %w", err)
+	}
+
+	return apiKey, nil
+}
+
+func (o *Client) CreateAPIKey(params models.APIKeyCreateParams) (*models.APIKeyNew, error) {
+	urlPostfix := "end_user_api_keys"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on creating an API key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on creating an API key: %w", err)
+	}
+
+	apiKey := &models.APIKeyNew{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKey); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyNew: %w", err)
+	}
+
+	return apiKey, nil
+}
+
+func (o *Client) UpdateAPIKey(apiKeyID string, params models.APIKeyUpdateParams) (bool, error) {
+	urlPostfix := fmt.Sprintf("end_user_api_keys/%s", apiKeyID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Patch(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on updating an API key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on updating an API key: %w", err)
+	}
+
+	return true, nil
+}
+
+func (o *Client) DeleteAPIKey(apiKeyID string) (bool, error) {
+	urlPostfix := fmt.Sprintf("end_user_api_keys/%s", apiKeyID)
+
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on deleting an API key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on deleting an API key: %w", err)
+	}
+
+	return true, nil
+}
+
+func (o *Client) FetchCurrentAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error) {
+	urlPostfix := "end_user_api_keys"
+
+	// assemble the parameters
+
+	queryParams := url.Values{}
+
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
+	if params.PageSize != nil {
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
+	}
+	if params.UserID != nil {
+		queryParams.Add("user_id", params.UserID.String())
+	}
+	if params.UserEmail != nil {
+		queryParams.Add("user_email", *params.UserEmail)
+	}
+	if params.OrgID != nil {
+		queryParams.Add("org_id", params.OrgID.String())
+	}
+
+	// make the request
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on querying API keys: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on querying API keys: %w", err)
+	}
+
+	fmt.Println(string(queryResponse.BodyText))
+
+	apiKeys := &models.APIKeyResultPage{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeys); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyResultPage: %w", err)
+	}
+
+	return apiKeys, nil
+}
+
+func (o *Client) FetchArchivedAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error) {
+	urlPostfix := "end_user_api_keys/archived"
+
+	// assemble the parameters
+
+	queryParams := url.Values{}
+
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
+	if params.PageSize != nil {
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
+	}
+	if params.UserID != nil {
+		queryParams.Add("user_id", params.UserID.String())
+	}
+	if params.UserEmail != nil {
+		queryParams.Add("user_email", *params.UserEmail)
+	}
+	if params.OrgID != nil {
+		queryParams.Add("org_id", params.OrgID.String())
+	}
+
+	// make the request
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on querying archived API keys: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on querying archived API keys: %w", err)
+	}
+
+	apiKeys := &models.APIKeyResultPage{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeys); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyResultPage: %w", err)
+	}
+
+	return apiKeys, nil
+}
+
+func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, error) {
+	urlPostfix := "end_user_api_keys/validate"
+
+	// assemble the parameters
+
+	type ValidteAPIKey struct {
+		APIKeyToken string `json:"api_key_token"`
+	}
+
+	bodyParams := ValidteAPIKey{
+		APIKeyToken: apiKeyToken,
+	}
+
+	bodyJSON, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	// make the request
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on validating an API Key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on validating an API Key: %w", err)
+	}
+
+	apiKeyValidate := &models.APIKeyValidation{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeyValidate); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyValidation: %w", err)
+	}
+
+	return apiKeyValidate, nil
 }
 
 // public methods for misc functionality
@@ -765,7 +1051,7 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int) (*mo
 
 	// make the request
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on creating access token: %w", err)
 	}
@@ -802,7 +1088,7 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
 	}
 
-	queryResponse, err := o.queryHelper.Post(o.apiKey, urlPostfix, nil, bodyJSON)
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
 	if err != nil {
 		return nil, fmt.Errorf("Error on creating magic link: %w", err)
 	}
