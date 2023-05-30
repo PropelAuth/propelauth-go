@@ -58,6 +58,8 @@ type ClientInterface interface {
 	DeleteAPIKey(apiKeyID string) (bool, error)
 	FetchCurrentAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error)
 	FetchArchivedAPIKeys(params models.APIKeysQueryParams) (*models.APIKeyResultPage, error)
+	ValidatePersonalAPIKey(apiKeyToken string) (*models.PersonalAPIKeyValidation, error)
+	ValidateOrgAPIKey(apiKeyToken string) (*models.OrgAPIKeyValidation, error)
 	ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
 
 	// a method to validate the JWT
@@ -987,6 +989,36 @@ func (o *Client) FetchArchivedAPIKeys(params models.APIKeysQueryParams) (*models
 	}
 
 	return apiKeys, nil
+}
+
+func (o *Client) ValidatePersonalAPIKey(apiKeyToken string) (*models.PersonalAPIKeyValidation, error) {
+	apiKeyValidate, err := o.ValidateAPIKey(apiKeyToken)
+	if err != nil {
+		return nil, err
+	}
+	if apiKeyValidate.Org != nil || apiKeyValidate.User == nil {
+		return nil, fmt.Errorf("not a personal API Key")
+	}
+	return &models.PersonalAPIKeyValidation{
+		User:     *apiKeyValidate.User,
+		Metadata: apiKeyValidate.Metadata,
+	}, nil
+}
+
+func (o *Client) ValidateOrgAPIKey(apiKeyToken string) (*models.OrgAPIKeyValidation, error) {
+	apiKeyValidate, err := o.ValidateAPIKey(apiKeyToken)
+	if err != nil {
+		return nil, err
+	}
+	if apiKeyValidate.Org == nil {
+		return nil, fmt.Errorf("not an org API Key")
+	}
+	return &models.OrgAPIKeyValidation{
+		Org:       *apiKeyValidate.Org,
+		Metadata:  apiKeyValidate.Metadata,
+		User:      apiKeyValidate.User,
+		UserInOrg: apiKeyValidate.UserInOrg,
+	}, nil
 }
 
 func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, error) {
