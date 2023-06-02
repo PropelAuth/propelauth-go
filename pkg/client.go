@@ -42,6 +42,7 @@ type ClientInterface interface {
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	CreateOrg(name string) (*models.OrgMetadata, error)
+	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
@@ -765,6 +766,22 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	}
 
 	return org, nil
+}
+
+// DeleteOrg will delete an organization.
+func (o *Client) DeleteOrg(orgID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
+
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on deleting an org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on deleting an org: %w", err)
+	}
+
+	return true, nil
 }
 
 // UpdateOrgMetadata will update properties on an organization. All fields are optional, we'll only update the ones
