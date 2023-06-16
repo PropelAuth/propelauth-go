@@ -84,7 +84,7 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 	// add headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("User-Agent", "propelauth-go " + runtime.GOOS + "/" + runtime.GOARCH)
+	req.Header.Set("User-Agent", "propelauth-go/0.8 go/" + runtime.Version() + " " + runtime.GOOS + "/" + runtime.GOARCH)
 
 	// send request
 	client := &http.Client{}
