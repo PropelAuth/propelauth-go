@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"runtime"
 )
 
 // Queryresponse is the common return type for the HTTP methods below. It structures the normal HTTP response
@@ -81,8 +82,9 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 	}
 
 	// add headers
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", "propelauth-go " + runtime.GOOS + "/" + runtime.GOARCH)
 
 	// send request
 	client := &http.Client{}
