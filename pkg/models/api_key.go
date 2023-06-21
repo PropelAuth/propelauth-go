@@ -24,10 +24,22 @@ type APIKeyResultPage struct {
 }
 
 type APIKeyValidation struct {
-	Metadata      map[string]interface{} `json:"metadata"`
-	UserMetadata  map[string]interface{} `json:"user_metadata"`
-	OrgMetadata   map[string]interface{} `json:"org_metadata"`
-	UserRoleInOrg string                 `json:"user_role_in_org"`
+	Metadata  map[string]interface{}  `json:"metadata"`
+	User      *UserMetadata           `json:"user"`
+	Org       *OrgMetadata            `json:"org"`
+	UserInOrg *OrgMemberInfoFromToken `json:"user_in_org"`
+}
+
+type PersonalAPIKeyValidation struct {
+	Metadata map[string]interface{} `json:"metadata"`
+	User     UserMetadata           `json:"user"`
+}
+
+type OrgAPIKeyValidation struct {
+	Metadata  map[string]interface{}  `json:"metadata"`
+	Org       OrgMetadata             `json:"org"`
+	User      *UserMetadata           `json:"user"`
+	UserInOrg *OrgMemberInfoFromToken `json:"user_in_org"`
 }
 
 type APIKeyNew struct {
