@@ -23,3 +23,12 @@ type AddUserToOrg struct {
 	OrgID  uuid.UUID `json:"org_id"`
 	Role   string    `json:"role"`
 }
+
+// InviteUserToOrg is the information needed to invite a new user to join an organization. Role is
+// just a string, but it has to match up to one of your defined roles, by default these are Owner,
+// Admin, or Member, but they can be changed via your dashboard.
+type InviteUserToOrg struct {
+	Email string    `json:"email"`
+	OrgID uuid.UUID `json:"org_id"`
+	Role  string    `json:"role"`
+}
