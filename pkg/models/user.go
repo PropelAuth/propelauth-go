@@ -31,6 +31,7 @@ type UserMetadata struct {
 	LegacyUserID   *string                 `json:"legacy_user_id"`
 	OrgIDToOrgInfo *map[uuid.UUID]OrgInfo  `json:"org_id_to_org_info"`
 	Metadata       *map[string]interface{} `json:"metadata"`
+	Properties     *map[string]interface{} `json:"properties"`
 }
 
 // OrgInfo is the information about an organization a user is in.
@@ -65,22 +66,24 @@ type CreateUserParams struct {
 	LastName                       *string                 `json:"last_name,omitempty"`
 	CanCreateOrgs                  *bool                   `json:"can_create_orgs,omitempty"`
 	Metadata                       *map[string]interface{} `json:"metadata,omitempty"`
+	Properties                     *map[string]interface{} `json:"properties,omitempty"`
 }
 
 // MigrateUserParams is the information needed to migrate a user from another system. Email is required, but all other
 // fields are optional. ExistingUserID will be saved in the LegacyUserID field in UserMetadata. If ExistingPasswordHash
 // is provided, the user will be able to log in with their same password.
 type MigrateUserParams struct {
-	Email                          string  `json:"email"`
-	EmailConfirmed                 *bool   `json:"email_confirmed,omitempty"`
-	ExistingUserID                 *string `json:"existing_user_id,omitempty"`
-	ExistingPasswordHash           *string `json:"existing_password_hash,omitempty"`
-	ExistingMfaBase32EncodedSecret *string `json:"existing_mfa_base32_encoded_secret,omitempty"`
-	Enabled                        *bool   `json:"enabled,omitempty"`
-	Username                       *string `json:"username,omitempty"`
-	FirstName                      *string `json:"first_name,omitempty"`
-	LastName                       *string `json:"last_name,omitempty"`
-	UpdatePasswordRequired         *bool   `json:"update_password_required,omitempty"`
+	Email                          string                  `json:"email"`
+	EmailConfirmed                 *bool                   `json:"email_confirmed,omitempty"`
+	ExistingUserID                 *string                 `json:"existing_user_id,omitempty"`
+	ExistingPasswordHash           *string                 `json:"existing_password_hash,omitempty"`
+	ExistingMfaBase32EncodedSecret *string                 `json:"existing_mfa_base32_encoded_secret,omitempty"`
+	Enabled                        *bool                   `json:"enabled,omitempty"`
+	Username                       *string                 `json:"username,omitempty"`
+	FirstName                      *string                 `json:"first_name,omitempty"`
+	LastName                       *string                 `json:"last_name,omitempty"`
+	UpdatePasswordRequired         *bool                   `json:"update_password_required,omitempty"`
+	Properties                     *map[string]interface{} `json:"properties,omitempty"`
 }
 
 // UpdateEmailParams is the information needed to update a user's email address.
@@ -99,6 +102,7 @@ type UpdateUserMetadata struct {
 	UpdatePasswordRequired *bool                   `json:"update_password_required,omitempty"`
 	CanCreateOrgs          *bool                   `json:"can_create_orgs,omitempty"`
 	Metadata               *map[string]interface{} `json:"metadata,omitempty"`
+	Properties             *map[string]interface{} `json:"properties,omitempty"`
 }
 
 // UserQueryParams is the information needed to query a pageable list of users. If left blank, PageSize defaults to 10
