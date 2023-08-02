@@ -50,6 +50,7 @@ type ClientInterface interface {
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
+	InviteUserToOrg(params models.InviteUserToOrg) (bool, error)
 	FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error)
 
 	// api key endpoints
@@ -678,6 +679,28 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on adding user to org: %w", err)
+	}
+
+	return true, nil
+}
+
+// InviteUserToOrg will email a user and invite them to join an org. If they don't have an account
+//  yet, they'll be asked to make one, and will be able to join the org right afterwards.
+func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
+	urlPostfix := "invite_user"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on inviting user to org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on inviting user to org: %w", err)
 	}
 
 	return true, nil
