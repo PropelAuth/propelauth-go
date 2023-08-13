@@ -23,10 +23,17 @@ type APIKeyResultPage struct {
 	HasMoreResults bool         `json:"has_more_results"`
 }
 
+type APIKeyOrgMetadata struct {
+	OrgID        uuid.UUID              `json:"org_id"`
+	OrgName      string                 `json:"org_name"`
+	CanSetupSaml bool                   `json:"can_setup_saml"`
+	Metadata     map[string]interface{} `json:"metadata"`
+}
+
 type APIKeyValidation struct {
 	Metadata  map[string]interface{}  `json:"metadata"`
 	User      *UserMetadata           `json:"user"`
-	Org       *OrgMetadata            `json:"org"`
+	Org       *APIKeyOrgMetadata      `json:"org"`
 	UserInOrg *OrgMemberInfoFromToken `json:"user_in_org"`
 }
 
@@ -37,7 +44,7 @@ type PersonalAPIKeyValidation struct {
 
 type OrgAPIKeyValidation struct {
 	Metadata  map[string]interface{}  `json:"metadata"`
-	Org       OrgMetadata             `json:"org"`
+	Org       APIKeyOrgMetadata       `json:"org"`
 	User      *UserMetadata           `json:"user"`
 	UserInOrg *OrgMemberInfoFromToken `json:"user_in_org"`
 }
