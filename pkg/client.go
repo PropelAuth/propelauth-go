@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"encoding/json"
-	"github.com/google/uuid"
 	"net/url"
+
+	"github.com/google/uuid"
 
 	"github.com/propelauth/propelauth-go/pkg/helpers"
 	"github.com/propelauth/propelauth-go/pkg/models"
@@ -684,8 +685,30 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 	return true, nil
 }
 
+// ChangeUserRole will change a user's role in an org.
+func (o *Client) ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error) {
+	urlPostfix := "org/change_role"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on changing user role in org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on changing user role in org: %w", err)
+	}
+
+	return true, nil
+}
+
 // InviteUserToOrg will email a user and invite them to join an org. If they don't have an account
-//  yet, they'll be asked to make one, and will be able to join the org right afterwards.
+//
+//	yet, they'll be asked to make one, and will be able to join the org right afterwards.
 func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
 	urlPostfix := "invite_user"
 
