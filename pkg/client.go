@@ -48,6 +48,7 @@ type ClientInterface interface {
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	CreateOrgSamlConnectionLink(orgID uuid.UUID, params models.CreateSamlConnectionLinkBody) (*models.CreateSamlConnectionLinkResponse, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -884,6 +885,32 @@ func (o *Client) DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	}
 
 	return true, nil
+}
+
+// CreateOrgSamlConnectionLink will create a SAML connection link for an org.
+func (o *Client) CreateOrgSamlConnectionLink(orgID uuid.UUID, params models.CreateSamlConnectionLinkBody) (*models.CreateSamlConnectionLinkResponse, error) {
+	urlPostfix := fmt.Sprintf("org/%s/create_saml_connection_link", orgID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on creating SAML connection link for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on creating SAML connection link for org: %w", err)
+	}
+
+	newUrl := &models.CreateSamlConnectionLinkResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, newUrl); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CreateSamlConnectionLinkResponse: %w", err)
+	}
+
+	return newUrl, nil
 }
 
 // public methods for managing API Keys

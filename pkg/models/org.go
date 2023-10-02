@@ -50,3 +50,12 @@ type OrgQueryParams struct {
 	PageNumber *int    `json:"page_number,omitempty"`
 	OrderBy    *string `json:"order_by,omitempty"`
 }
+
+// CreateSamlConnectionLinkBody is the information needed to create a SAML connection link.
+type CreateSamlConnectionLinkBody struct {
+	ExpiresInSeconds int `json:"expires_in_seconds"`
+}
+
+type CreateSamlConnectionLinkResponse struct {
+	URL string `json:"url"`
+}
