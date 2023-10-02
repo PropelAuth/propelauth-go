@@ -48,6 +48,7 @@ type ClientInterface interface {
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -483,6 +484,10 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 
 	return true, nil
 }
+
+// ClearUserPassword will clear a user's password, meaning they will be forced to reset their password the
+// next time they log in.
+func (o )
 
 // UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
 // that are provided.
