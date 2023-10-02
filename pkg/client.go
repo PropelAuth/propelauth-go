@@ -39,6 +39,7 @@ type ClientInterface interface {
 	UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error)
 	EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
+	ClearUserPassword(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -485,9 +486,21 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 	return true, nil
 }
 
-// ClearUserPassword will clear a user's password, meaning they will be forced to reset their password the
-// next time they log in.
-func (o )
+// ClearUserPassword will clear a user's password.
+func (o *Client) ClearUserPassword(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/clear_password", userID)
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
+	}
+
+	return true, nil
+}
 
 // UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
 // that are provided.
