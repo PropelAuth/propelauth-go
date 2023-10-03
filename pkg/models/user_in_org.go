@@ -24,6 +24,12 @@ type AddUserToOrg struct {
 	Role   string    `json:"role"`
 }
 
+// RemoveUserFromOrg is the information needed to remove a user from an organization.
+type RemoveUserFromOrg struct {
+	UserID uuid.UUID `json:"user_id"`
+	OrgID  uuid.UUID `json:"org_id"`
+}
+
 // InviteUserToOrg is the information needed to invite a new user to join an organization. Role is
 // just a string, but it has to match up to one of your defined roles, by default these are Owner,
 // Admin, or Member, but they can be changed via your dashboard.
@@ -31,4 +37,13 @@ type InviteUserToOrg struct {
 	Email string    `json:"email"`
 	OrgID uuid.UUID `json:"org_id"`
 	Role  string    `json:"role"`
+}
+
+// ChangeUserRoleInOrg is the information needed to change a user's role in an organization. Role is
+// just a string, but it has to match up to one of your defined roles, by default these are Owner,
+// Admin, or Member, but they can be changed via your dashboard.
+type ChangeUserRoleInOrg struct {
+	UserID uuid.UUID `json:"user_id"`
+	OrgID  uuid.UUID `json:"org_id"`
+	Role   string    `json:"role"`
 }

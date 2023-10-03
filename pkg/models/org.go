@@ -41,6 +41,7 @@ type UpdateOrg struct {
 	RestrictToDomain *bool                   `json:"restrict_to_domain"`
 	MaxUsers         *int                    `json:"max_users"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
+	Domain           *string                 `json:"domain,omitempty"`
 }
 
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
@@ -49,4 +50,19 @@ type OrgQueryParams struct {
 	PageSize   *int    `json:"page_size,omitempty"`
 	PageNumber *int    `json:"page_number,omitempty"`
 	OrderBy    *string `json:"order_by,omitempty"`
+}
+
+// CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
+type CreateOrgV2Params struct {
+	Name                          string `json:"name"`
+	Domain                        string `json:"domain,omitempty"`
+	EnableAutoJoiningByDomain     bool   `json:"enable_auto_joining_by_domain,omitempty"`
+	MembersMustHaveMatchingDomain bool   `json:"members_must_have_matching_domain,omitempty"`
+	MaxUsers                      int    `json:"max_users,omitempty"`
+}
+
+// CreateOrgV2Response is the information returned when creating an organization.
+type CreateOrgV2Response struct {
+	OrgID uuid.UUID `json:"org_id"`
+	Name  string    `json:"name"`
 }

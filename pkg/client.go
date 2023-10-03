@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"encoding/json"
-	"github.com/google/uuid"
 	"net/url"
+
+	"github.com/google/uuid"
 
 	"github.com/propelauth/propelauth-go/pkg/helpers"
 	"github.com/propelauth/propelauth-go/pkg/models"
@@ -38,18 +39,23 @@ type ClientInterface interface {
 	UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error)
 	EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
+	ClearUserPassword(userID uuid.UUID) (bool, error)
+	DisableUser2fa(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	CreateOrg(name string) (*models.OrgMetadata, error)
+	CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error)
 	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
+	RemoveUserFromOrg(params models.RemoveUserFromOrg) (bool, error)
 	InviteUserToOrg(params models.InviteUserToOrg) (bool, error)
 	FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error)
 
@@ -483,6 +489,22 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 	return true, nil
 }
 
+// ClearUserPassword will clear a user's password.
+func (o *Client) ClearUserPassword(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/clear_password", userID)
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
+	}
+
+	return true, nil
+}
+
 // UpdateUserMetadata will update properties on a user. All fields are optional, we'll only update the ones
 // that are provided.
 func (o *Client) UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMetadata) (bool, error) {
@@ -628,6 +650,22 @@ func (o *Client) DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error) {
 	return true, nil
 }
 
+// DisableUser2fa will disable 2fa for a user.
+func (o *Client) DisableUser2fa(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/disable_2fa", userID)
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on disabling user 2fa: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on disabling user 2fa: %w", err)
+	}
+
+	return true, nil
+}
+
 // public methods for users in orgs
 
 // FetchUsersInOrg will fetch a paged list of users in an organization.
@@ -684,8 +722,51 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 	return true, nil
 }
 
+// RemoveUserFromOrg will remove the user from an org.
+func (o *Client) RemoveUserFromOrg(params models.RemoveUserFromOrg) (bool, error) {
+	urlPostfix := "org/remove_user"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on removing user from org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on removing user from org: %w", err)
+	}
+
+	return true, nil
+}
+
+// ChangeUserRole will change a user's role in an org.
+func (o *Client) ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error) {
+	urlPostfix := "org/change_role"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on changing user role in org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on changing user role in org: %w", err)
+	}
+
+	return true, nil
+}
+
 // InviteUserToOrg will email a user and invite them to join an org. If they don't have an account
-//  yet, they'll be asked to make one, and will be able to join the org right afterwards.
+//
+//	yet, they'll be asked to make one, and will be able to join the org right afterwards.
 func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
 	urlPostfix := "invite_user"
 
@@ -755,6 +836,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	return orgs, nil
 }
 
+// NOTE: THIS IS DEPRECATED.
 // CreateOrg will an organization and return its data, which is mostly just the org's ID.
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	urlPostfix := "org/"
@@ -788,6 +870,32 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	org := &models.OrgMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
+	}
+
+	return org, nil
+}
+
+// CreateOrgV2 is the updated version of CreateOrg. It will create an organization and return its data.
+func (o *Client) CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error) {
+	urlPostfix := "org/"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on creating org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on creating org: %w", err)
+	}
+
+	org := &models.CreateOrgV2Response{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CreateOrgV2Response: %w", err)
 	}
 
 	return org, nil
