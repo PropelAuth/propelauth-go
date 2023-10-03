@@ -39,6 +39,7 @@ type ClientInterface interface {
 	UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error)
 	EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
+	ClearUserPassword(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -48,6 +49,7 @@ type ClientInterface interface {
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -479,6 +481,22 @@ func (o *Client) UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (b
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on updating user email: %w", err)
+	}
+
+	return true, nil
+}
+
+// ClearUserPassword will clear a user's password.
+func (o *Client) ClearUserPassword(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/clear_password", userID)
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on clearing user password: %w", err)
 	}
 
 	return true, nil
