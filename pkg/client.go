@@ -45,7 +45,7 @@ type ClientInterface interface {
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	CreateOrg(name string) (*models.OrgMetadata, error)
-	CreateOrgV2(params models.CreateOrgV2Params) (*models.OrgMetadata, error)
+	CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error)
 	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
