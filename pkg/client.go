@@ -45,6 +45,7 @@ type ClientInterface interface {
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	CreateOrg(name string) (*models.OrgMetadata, error)
+	CreateOrgV2(params models.CreateOrgV2Params) (*models.OrgMetadata, error)
 	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
@@ -835,6 +836,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	return orgs, nil
 }
 
+// NOTE: THIS IS DEPRECATED.
 // CreateOrg will an organization and return its data, which is mostly just the org's ID.
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	urlPostfix := "org/"
@@ -868,6 +870,32 @@ func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
 	org := &models.OrgMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
 		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
+	}
+
+	return org, nil
+}
+
+// CreateOrgV2 is the updated version of CreateOrg. It will create an organization and return its data.
+func (o *Client) CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error) {
+	urlPostfix := "org/"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on creating org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on creating org: %w", err)
+	}
+
+	org := &models.CreateOrgV2Response{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CreateOrgV2Response: %w", err)
 	}
 
 	return org, nil
