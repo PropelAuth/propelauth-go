@@ -41,6 +41,7 @@ type UpdateOrg struct {
 	RestrictToDomain *bool                   `json:"restrict_to_domain"`
 	MaxUsers         *int                    `json:"max_users"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
+	Domain           *string                 `json:"domain,omitempty"`
 }
 
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
