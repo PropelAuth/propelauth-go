@@ -54,6 +54,7 @@ type ClientInterface interface {
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
+	RemoveUserFromOrg(params models.RemoveUserFromOrg) (bool, error)
 	InviteUserToOrg(params models.InviteUserToOrg) (bool, error)
 	FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error)
 
@@ -715,6 +716,27 @@ func (o *Client) AddUserToOrg(params models.AddUserToOrg) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on adding user to org: %w", err)
+	}
+
+	return true, nil
+}
+
+// RemoveUserFromOrg will remove the user from an org.
+func (o *Client) RemoveUserFromOrg(params models.RemoveUserFromOrg) (bool, error) {
+	urlPostfix := "org/remove_user"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on removing user from org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on removing user from org: %w", err)
 	}
 
 	return true, nil
