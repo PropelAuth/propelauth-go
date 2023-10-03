@@ -40,6 +40,7 @@ type ClientInterface interface {
 	EnableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	ClearUserPassword(userID uuid.UUID) (bool, error)
+	DisableUser2fa(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -642,6 +643,22 @@ func (o *Client) DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on disable user can create orgs: %w", err)
+	}
+
+	return true, nil
+}
+
+// DisableUser2fa will disable 2fa for a user.
+func (o *Client) DisableUser2fa(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/disable_2fa", userID)
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on disabling user 2fa: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on disabling user 2fa: %w", err)
 	}
 
 	return true, nil
