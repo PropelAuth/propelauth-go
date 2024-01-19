@@ -50,6 +50,7 @@ type OrgQueryParams struct {
 	PageSize   *int    `json:"page_size,omitempty"`
 	PageNumber *int    `json:"page_number,omitempty"`
 	OrderBy    *string `json:"order_by,omitempty"`
+	Name       *string `json:"name,omitempty"`
 }
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
