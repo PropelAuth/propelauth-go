@@ -8,11 +8,13 @@ import (
 
 // UserInOrgQueryParams is the information for querying a pageable list of users in an organization.
 // If left blank, PageSize defaults to 10 and PageNumber defaults to 0. IncludeOrgs defaults to false,
-// but if set to true will include all orgs each user is in.
+// but if set to true will include all orgs each user is in. Role can be used to filter users by
+// their role in the organization. Only case-sensitive, exact matches will be returned for Role.
 type UserInOrgQueryParams struct {
-	PageSize    *int  `json:"page_size,omitempty"`
-	PageNumber  *int  `json:"page_number,omitempty"`
-	IncludeOrgs *bool `json:"include_orgs,omitempty"`
+	PageSize    *int    `json:"page_size,omitempty"`
+	PageNumber  *int    `json:"page_number,omitempty"`
+	IncludeOrgs *bool   `json:"include_orgs,omitempty"`
+	Role        *string `json:"role,omitempty"`
 }
 
 // AddUserToOrg is the information needed to add a user to an organization. Role is just a string, but

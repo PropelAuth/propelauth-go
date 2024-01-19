@@ -683,6 +683,9 @@ func (o *Client) FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryPa
 	if params.IncludeOrgs != nil {
 		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
 	}
+	if params.Role != nil {
+		queryParams.Add("role", *params.Role)
+	}
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
