@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/rsa"
+
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -59,6 +60,12 @@ type UserFromToken struct {
 	ImpersonatorUserID   *uuid.UUID                         `json:"impersonator_user_id,omitempty"`
 	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
+	Email                *string                            `json:"email"`
+	FirstName            *string                            `json:"first_name,omitempty"`
+	LastName             *string                            `json:"last_name,omitempty"`
+	Username             *string                            `json:"username,omitempty"`
+	Properties           map[string]interface{}             `json:"properties,omitempty"`
+	PictureURL           *string                            `json:"picture_url,omitempty"`
 	jwt.RegisteredClaims
 }
 
