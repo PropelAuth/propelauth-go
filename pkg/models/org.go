@@ -5,39 +5,14 @@ import (
 )
 
 // return types
-type OrgRoleDefinition struct {
-	Name                string   `json:"name"`
-	CanInvite           bool     `json:"can_invite"`
-	CanChangeRoles      bool     `json:"can_change_roles"`
-	CanManageAPIKeys    *bool    `json:"can_manage_api_keys,omitempty"`
-	CanRemoveUsers      bool     `json:"can_remove_users"`
-	CanSetupSaml        *bool    `json:"can_setup_saml,omitempty"`
-	CanViewOtherMember  bool     `json:"can_view_other_members"`
-	Deprecated          bool     `json:"deprecated"`
-	Description         *string  `json:"description,omitempty"`
-	ExternalPermissions []string `json:"external_permissions"`
-	IsVisibleToEndUser  bool     `json:"is_visible_to_end_user"`
-}
-
-type OrgDefinition struct {
-	Roles       []OrgRoleDefinition `json:"roles"`
-	DefaultRole *string             `json:"default_role"`
-}
 
 // OrgMetadata has the information about the organziation.
 type OrgMetadata struct {
 	OrgID            uuid.UUID              `json:"org_id"`
 	Name             string                 `json:"org_name"`
-	OrgDefinition    OrgDefinition          `json:"org_definition"`
-	CanSetupSaml     bool                   `json:"can_setup_saml"`
-	AutojoinByDomain bool                   `json:"autojoin_by_domain"`
-	RestrictToDomain bool                   `json:"restrict_to_domain"`
-	Domain           *string                `json:"domain"`
-	Require2FABy     *string                `json:"require_2fa_by"`
 	MaxUsers         *int                   `json:"max_users"`
 	Metadata         map[string]interface{} `json:"metadata"`
 	IsSamlConfigured bool                   `json:"is_saml_configured"`
-	IsSamlInTestMode bool                   `json:"is_saml_in_test_mode"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
