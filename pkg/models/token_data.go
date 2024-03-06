@@ -58,14 +58,12 @@ type UserFromToken struct {
 	UserID               uuid.UUID                          `json:"user_id"`
 	LegacyUserID         *string                            `json:"legacy_user_id,omitempty"`
 	ImpersonatorUserID   *uuid.UUID                         `json:"impersonator_user_id,omitempty"`
-	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	Email                *string                            `json:"email"`
 	FirstName            *string                            `json:"first_name,omitempty"`
 	LastName             *string                            `json:"last_name,omitempty"`
 	Username             *string                            `json:"username,omitempty"`
 	Properties           map[string]interface{}             `json:"properties,omitempty"`
-	PictureURL           *string                            `json:"picture_url,omitempty"`
 	jwt.RegisteredClaims
 }
 
