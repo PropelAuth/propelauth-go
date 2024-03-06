@@ -2,10 +2,11 @@ package client_test
 
 import (
 	"fmt"
+	"testing"
+
 	propelauth "github.com/propelauth/propelauth-go/pkg"
 	"github.com/propelauth/propelauth-go/pkg/models"
 	testHelpers "github.com/propelauth/propelauth-go/pkg/test"
-	"testing"
 )
 
 func TestInitializations(t *testing.T) {
@@ -88,6 +89,38 @@ func TestValidations(t *testing.T) {
 		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+	})
+
+	t.Run("GetActiveOrgMemberInfo", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		// run tests
+		user.ActiveOrgId = &org.OrgID
+		activeOrgMemberInfo := user.GetActiveOrgMemberInfo()
+		if activeOrgMemberInfo == nil {
+			t.Errorf("GetActiveOrgID should have returned something")
+		}
+	})
+
+	t.Run("GetActiveOrgID", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		// run tests
+		user.ActiveOrgId = &org.OrgID
+		activeOrgID := user.GetActiveOrgID()
+		if activeOrgID == nil {
+			t.Errorf("GetActiveOrgID should have returned something")
 		}
 	})
 
