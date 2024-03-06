@@ -60,6 +60,7 @@ type UserFromToken struct {
 	ImpersonatorUserID   *uuid.UUID                         `json:"impersonator_user_id,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
+	OrgMemberInfo        *OrgMemberInfoFromToken            `json:"org_member_info,omitempty"`
 	Email                *string                            `json:"email"`
 	FirstName            *string                            `json:"first_name,omitempty"`
 	LastName             *string                            `json:"last_name,omitempty"`
