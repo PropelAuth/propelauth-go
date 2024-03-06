@@ -14,6 +14,11 @@ type AccessToken struct {
 	AccessToken string `json:"access_token"`
 }
 
+type CreateAccessTokenOptions struct {
+	ActiveOrgId          *uuid.UUID
+	WithActiveOrgSupport *bool
+}
+
 type AccessTokenResponse struct {
 	AccessToken AccessTokenData `json:"access_token"`
 }

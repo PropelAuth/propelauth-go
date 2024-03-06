@@ -20,7 +20,7 @@ const backendURLApiPrefix = "/api/backend/v1/"
 // It's also a convient listing of all the methods available to the integration programmer.
 type ClientInterface interface {
 	// user endpoints
-	CreateAccessToken(userID uuid.UUID, durationInMinutes int, ActiveOrgId *uuid.UUID, WithActiveOrgSupport *bool) (*models.AccessToken, error)
+	CreateAccessToken(userID uuid.UUID, durationInMinutes int, createAccessTokenOptions ...models.CreateAccessTokenOptions) (*models.AccessToken, error)
 	CreateMagicLink(params models.CreateMagicLinkParams) (*models.CreateMagicLinkResponse, error)
 	CreateUser(params models.CreateUserParams) (*models.UserID, error)
 	DeleteUser(userID uuid.UUID) (bool, error)
@@ -1212,7 +1212,7 @@ func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, e
 // public methods for misc functionality
 
 // CreateAccessToken creates an access token.
-func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int, ActiveOrgId *uuid.UUID, WithActiveOrgSupport *bool) (*models.AccessToken, error) {
+func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int, createAccessTokenOptions ...models.CreateAccessTokenOptions) (*models.AccessToken, error) {
 	urlPostfix := "access_token"
 
 	// assemble body params
@@ -1229,11 +1229,9 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int, Acti
 		DurationInMinutes: durationInMinutes,
 	}
 
-	if ActiveOrgId != nil {
-		bodyParams.ActiveOrgId = ActiveOrgId
-	}
-	if WithActiveOrgSupport != nil {
-		bodyParams.WithActiveOrgSupport = WithActiveOrgSupport
+	if len(createAccessTokenOptions) == 1 {
+		bodyParams.ActiveOrgId = createAccessTokenOptions[0].ActiveOrgId
+		bodyParams.WithActiveOrgSupport = createAccessTokenOptions[0].WithActiveOrgSupport
 	}
 
 	bodyJSON, err := json.Marshal(bodyParams)
