@@ -7,9 +7,10 @@ import (
 	pem "encoding/pem"
 	"errors"
 	"fmt"
+	"strings"
+
 	jwt "github.com/golang-jwt/jwt/v5"
 	models "github.com/propelauth/propelauth-go/pkg/models"
-	"strings"
 )
 
 type ValidationHelperInterface interface {
@@ -48,7 +49,20 @@ func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tok
 		return nil, fmt.Errorf("Error decoding JWT: invalid issuer")
 	}
 
-	return claims, nil
+	userFromToken := AssignActiveOrg(claims)
+	return userFromToken, nil
+}
+
+func AssignActiveOrg(userFromToken *models.UserFromToken) *models.UserFromToken {
+	// Properly assign OrgIdToOrgMemberInfo for Active Org Support
+	if userFromToken.OrgMemberInfo != nil {
+		userFromToken.ActiveOrgId = &userFromToken.OrgMemberInfo.OrgID
+		userFromToken.OrgIDToOrgMemberInfo = map[string]*models.OrgMemberInfoFromToken{
+			userFromToken.OrgMemberInfo.OrgID.String(): userFromToken.OrgMemberInfo,
+		}
+		userFromToken.OrgMemberInfo = nil
+	}
+	return userFromToken
 }
 
 func (o *ValidationHelper) ExtractTokenFromAuthorizationHeader(authHeader string) (string, error) {

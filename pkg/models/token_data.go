@@ -56,6 +56,7 @@ type UserAndOrgMemberInfoFromToken struct {
 // UserFromToken is the user data from the JWT.
 type UserFromToken struct {
 	UserID               uuid.UUID                          `json:"user_id"`
+	ActiveOrgId          *uuid.UUID                         `json:"active_org_id,omitempty"`
 	LegacyUserID         *string                            `json:"legacy_user_id,omitempty"`
 	ImpersonatorUserID   *uuid.UUID                         `json:"impersonator_user_id,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
