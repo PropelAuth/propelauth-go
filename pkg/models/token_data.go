@@ -75,6 +75,19 @@ func (o *UserFromToken) GetOrgMemberInfo(orgID uuid.UUID) *OrgMemberInfoFromToke
 	return o.OrgIDToOrgMemberInfo[orgID.String()]
 }
 
+// GetActiveOrgMemberInfo returns the OrgMemberInfoFromToken for the active Organization.
+func (o *UserFromToken) GetActiveOrgMemberInfo() *OrgMemberInfoFromToken {
+	if o.ActiveOrgId == nil {
+		return nil
+	}
+	return o.GetOrgMemberInfo(*o.ActiveOrgId)
+}
+
+// GetActiveOrgID returns the active Organization UUID.
+func (o *UserFromToken) GetActiveOrgID() *uuid.UUID {
+	return o.ActiveOrgId
+}
+
 // OrgMemberInfoFromToken is data about an organization and about this user's membership in it.
 type OrgMemberInfoFromToken struct {
 	OrgID                             uuid.UUID              `json:"org_id"`
