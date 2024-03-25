@@ -8,10 +8,11 @@ import (
 
 // OrgMetadata has the information about the organziation.
 type OrgMetadata struct {
-	OrgID    uuid.UUID              `json:"org_id"`
-	Name     string                 `json:"name"`
-	MaxUsers int                    `json:"max_users"`
-	Metadata map[string]interface{} `json:"metadata"`
+	OrgID            uuid.UUID              `json:"org_id"`
+	Name             string                 `json:"org_name"`
+	MaxUsers         *int                   `json:"max_users"`
+	Metadata         map[string]interface{} `json:"metadata"`
+	IsSamlConfigured bool                   `json:"is_saml_configured"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -42,6 +43,7 @@ type UpdateOrg struct {
 	MaxUsers         *int                    `json:"max_users"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 	Domain           *string                 `json:"domain,omitempty"`
+	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
 }
 
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
