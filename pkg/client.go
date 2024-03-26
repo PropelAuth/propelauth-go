@@ -1218,10 +1218,9 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int, crea
 	// assemble body params
 
 	type CreateAccessToken struct {
-		UserID               uuid.UUID  `json:"user_id"`
-		DurationInMinutes    int        `json:"duration_in_minutes"`
-		ActiveOrgId          *uuid.UUID `json:"active_org_id,omitempty"`
-		WithActiveOrgSupport *bool      `json:"with_active_org_support,omitempty"`
+		UserID            uuid.UUID  `json:"user_id"`
+		DurationInMinutes int        `json:"duration_in_minutes"`
+		ActiveOrgId       *uuid.UUID `json:"active_org_id,omitempty"`
 	}
 
 	bodyParams := CreateAccessToken{
@@ -1231,7 +1230,6 @@ func (o *Client) CreateAccessToken(userID uuid.UUID, durationInMinutes int, crea
 
 	if len(createAccessTokenOptions) == 1 {
 		bodyParams.ActiveOrgId = createAccessTokenOptions[0].ActiveOrgId
-		bodyParams.WithActiveOrgSupport = createAccessTokenOptions[0].WithActiveOrgSupport
 	}
 
 	bodyJSON, err := json.Marshal(bodyParams)

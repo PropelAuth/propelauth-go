@@ -15,8 +15,7 @@ type AccessToken struct {
 }
 
 type CreateAccessTokenOptions struct {
-	ActiveOrgId          *uuid.UUID
-	WithActiveOrgSupport *bool
+	ActiveOrgId *uuid.UUID
 }
 
 type AccessTokenResponse struct {
