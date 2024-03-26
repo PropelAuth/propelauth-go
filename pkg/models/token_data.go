@@ -14,6 +14,10 @@ type AccessToken struct {
 	AccessToken string `json:"access_token"`
 }
 
+type CreateAccessTokenOptions struct {
+	ActiveOrgId *uuid.UUID
+}
+
 type AccessTokenResponse struct {
 	AccessToken AccessTokenData `json:"access_token"`
 }
@@ -56,10 +60,12 @@ type UserAndOrgMemberInfoFromToken struct {
 // UserFromToken is the user data from the JWT.
 type UserFromToken struct {
 	UserID               uuid.UUID                          `json:"user_id"`
+	ActiveOrgId          *uuid.UUID                         `json:"active_org_id,omitempty"`
 	LegacyUserID         *string                            `json:"legacy_user_id,omitempty"`
 	ImpersonatorUserID   *uuid.UUID                         `json:"impersonator_user_id,omitempty"`
 	OrgIDToOrgMemberInfo map[string]*OrgMemberInfoFromToken `json:"org_id_to_org_member_info"`
 	Metadata             map[string]interface{}             `json:"metadata,omitempty"`
+	OrgMemberInfo        *OrgMemberInfoFromToken            `json:"org_member_info,omitempty"`
 	Email                *string                            `json:"email"`
 	FirstName            *string                            `json:"first_name,omitempty"`
 	LastName             *string                            `json:"last_name,omitempty"`
@@ -71,6 +77,19 @@ type UserFromToken struct {
 // GetOrgMemberInfo returns the OrgMemberInfoFromToken for the given Organization UUID.
 func (o *UserFromToken) GetOrgMemberInfo(orgID uuid.UUID) *OrgMemberInfoFromToken {
 	return o.OrgIDToOrgMemberInfo[orgID.String()]
+}
+
+// GetActiveOrgMemberInfo returns the OrgMemberInfoFromToken for the active Organization.
+func (o *UserFromToken) GetActiveOrgMemberInfo() *OrgMemberInfoFromToken {
+	if o.ActiveOrgId == nil {
+		return nil
+	}
+	return o.GetOrgMemberInfo(*o.ActiveOrgId)
+}
+
+// GetActiveOrgID returns the active Organization UUID.
+func (o *UserFromToken) GetActiveOrgID() *uuid.UUID {
+	return o.ActiveOrgId
 }
 
 // OrgMemberInfoFromToken is data about an organization and about this user's membership in it.
