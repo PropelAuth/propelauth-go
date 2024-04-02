@@ -57,6 +57,12 @@ type UserAndOrgMemberInfoFromToken struct {
 	OrgMemberInfo OrgMemberInfoFromToken
 }
 
+type LoginMethod struct {
+	LoginMethod string `json:"login_method"`
+	Provider    string `json:"provider,omitempty"`
+	OrgID       string `json:"org_id,omitempty"`
+}
+
 // UserFromToken is the user data from the JWT.
 type UserFromToken struct {
 	UserID               uuid.UUID                          `json:"user_id"`
@@ -71,6 +77,7 @@ type UserFromToken struct {
 	LastName             *string                            `json:"last_name,omitempty"`
 	Username             *string                            `json:"username,omitempty"`
 	Properties           map[string]interface{}             `json:"properties,omitempty"`
+	LoginMethod          *LoginMethod                       `json:"login_method,omitempty"`
 	jwt.RegisteredClaims
 }
 
