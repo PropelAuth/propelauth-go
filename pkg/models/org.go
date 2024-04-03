@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 )
 
@@ -68,4 +70,41 @@ type CreateOrgV2Params struct {
 type CreateOrgV2Response struct {
 	OrgID uuid.UUID `json:"org_id"`
 	Name  string    `json:"name"`
+}
+
+type OrgRoleStructure uint8
+
+const (
+	SingleRoleInHierarchy OrgRoleStructure = iota
+	MultiRole
+)
+
+func (o OrgRoleStructure) String() string {
+	return [...]string{"single_role_in_hierarchy", "multi_role"}[o]
+}
+
+func (o *OrgRoleStructure) FromString(s string) OrgRoleStructure {
+	switch s {
+	case "single_role_in_hierarchy":
+		return SingleRoleInHierarchy
+	case "multi_role":
+		return MultiRole
+	default:
+		return SingleRoleInHierarchy
+	}
+}
+
+func (o OrgRoleStructure) MarshalJSON() ([]byte, error) {
+	return json.Marshal(o.String())
+}
+
+func (o *OrgRoleStructure) UnmarshalJSON(data []byte) error {
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	*o = o.FromString(s)
+	return nil
 }

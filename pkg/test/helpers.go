@@ -5,10 +5,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	pem "encoding/pem"
+	"time"
+
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/propelauth/propelauth-go/pkg/models"
-	"time"
 )
 
 func RandomUserID() uuid.UUID {
@@ -20,14 +21,24 @@ func RandomOrgID() uuid.UUID {
 }
 
 // Represents the incoming JSON from the auth server.
-func RandomOrg(userRole string, permissions []string) models.OrgMemberInfoFromToken {
-	return models.OrgMemberInfoFromToken{
-		OrgID:                             RandomOrgID(),
-		OrgName:                           "orgname",
-		OrgMetadata:                       map[string]interface{}{},
-		UserAssignedRole:                  userRole,
-		UserInheritedRolesPlusCurrentRole: []string{userRole},
-		UserPermissions:                   permissions,
+func RandomOrg(userRole string, multi_role bool) models.OrgMemberInfoFromToken {
+	if multi_role {
+		return models.OrgMemberInfoFromToken{
+			OrgID:                             RandomOrgID(),
+			OrgName:                           "orgname",
+			OrgMetadata:                       map[string]interface{}{},
+			OrgRoleStructure: 				   models.MultiRole,
+			UserAssignedRole:                  userRole,
+			UserInheritedRolesPlusCurrentRole: []string{userRole},
+		}
+	} else {
+		return models.OrgMemberInfoFromToken{
+			OrgID:                             RandomOrgID(),
+			OrgName:                           "orgname",
+			OrgMetadata:                       map[string]interface{}{},
+			UserAssignedRole:                  userRole,
+			UserInheritedRolesPlusCurrentRole: []string{userRole},
+		}
 	}
 }
 
@@ -35,9 +46,9 @@ func RandomOrg(userRole string, permissions []string) models.OrgMemberInfoFromTo
 func OrgsToOrgIDMap(orgs []models.OrgMemberInfoFromToken) map[string]*models.OrgMemberInfoFromToken {
 	orgIDToOrgMemberInfo := make(map[string]*models.OrgMemberInfoFromToken)
 
-	for _, org := range orgs {
-		uuidAsString := org.OrgID.String()
-		orgIDToOrgMemberInfo[uuidAsString] = &org
+	for i := range orgs {
+		uuidAsString := orgs[i].OrgID.String()
+		orgIDToOrgMemberInfo[uuidAsString] = &orgs[i]
 	}
 
 	return orgIDToOrgMemberInfo

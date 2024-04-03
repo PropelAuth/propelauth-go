@@ -79,36 +79,43 @@ type OrgMemberInfoFromToken struct {
 	OrgName                           string                 `json:"org_name"`
 	OrgMetadata                       map[string]interface{} `json:"org_metadata,omitempty"`
 	URLSafeOrgName                    string                 `json:"url_safe_org_name,omitempty"`
+	OrgRoleStructure                  OrgRoleStructure       `json:"org_role_structure"`
 	UserAssignedRole                  string                 `json:"user_role"`
 	UserInheritedRolesPlusCurrentRole []string               `json:"inherited_user_roles_plus_current_role"`
 	UserPermissions                   []string               `json:"user_permissions,omitempty"`
+	UserAssignedAdditionalRoles       []string               `json:"additional_roles"`
+}
+
+func arrayContains(array []string, value string) bool {
+	for _, v := range array {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 // IsRole returns true if the user has the exact role.
 func (o *OrgMemberInfoFromToken) IsRole(exactRole string) bool {
-	return exactRole == o.UserAssignedRole
+	if o.OrgRoleStructure == MultiRole {
+		return exactRole == o.UserAssignedRole || arrayContains(o.UserAssignedAdditionalRoles, exactRole)
+	} else {
+		return exactRole == o.UserAssignedRole
+	}
 }
 
 // IsAtLeastRole returns true if the user has the exact role or a role that is higher in the hierarchy.
 func (o *OrgMemberInfoFromToken) IsAtLeastRole(minimumRoles string) bool {
-	for _, role := range o.UserInheritedRolesPlusCurrentRole {
-		if minimumRoles == role {
-			return true
-		}
+	if o.OrgRoleStructure == MultiRole {
+		return minimumRoles == o.UserAssignedRole || arrayContains(o.UserAssignedAdditionalRoles, minimumRoles)
+	} else {
+		return arrayContains(o.UserInheritedRolesPlusCurrentRole, minimumRoles)
 	}
-
-	return false
 }
 
 // HasPermission returns true if the user has the exact permission.
 func (o *OrgMemberInfoFromToken) HasPermission(permission string) bool {
-	for _, p := range o.UserPermissions {
-		if permission == p {
-			return true
-		}
-	}
-
-	return false
+	return arrayContains(o.UserPermissions, permission)
 }
 
 // HasAllPermissions returns true if the user has all of the permissions.

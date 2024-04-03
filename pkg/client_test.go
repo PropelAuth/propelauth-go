@@ -2,10 +2,11 @@ package client_test
 
 import (
 	"fmt"
+	"testing"
+
 	propelauth "github.com/propelauth/propelauth-go/pkg"
 	"github.com/propelauth/propelauth-go/pkg/models"
 	testHelpers "github.com/propelauth/propelauth-go/pkg/test"
-	"testing"
 )
 
 func TestInitializations(t *testing.T) {
@@ -41,10 +42,16 @@ func TestValidations(t *testing.T) {
 	privateKey, publicKey := testHelpers.GenerateRSAKeys()
 
 	userID := testHelpers.RandomUserID()
-	org := testHelpers.RandomOrg("Admin", nil)
-	org.UserInheritedRolesPlusCurrentRole = []string{"Admin", "Member"}
-	org.UserPermissions = []string{"Read", "Write"}
-	orgIDToOrgMemberInfo := testHelpers.OrgsToOrgIDMap([]models.OrgMemberInfoFromToken{org})
+
+	orgSingleRole := testHelpers.RandomOrg("Admin", false)
+	orgSingleRole.UserInheritedRolesPlusCurrentRole = []string{"Admin", "Member"}
+	orgSingleRole.UserPermissions = []string{"Read", "Write"}
+
+	orgMultiRole := testHelpers.RandomOrg("Role A", true)
+	orgMultiRole.UserAssignedAdditionalRoles = []string{"Role B", "Role C"}
+
+	orgIDToOrgMemberInfo := testHelpers.OrgsToOrgIDMap([]models.OrgMemberInfoFromToken{orgSingleRole, orgMultiRole})
+
 	user := models.UserFromToken{
 		UserID:               userID,
 		OrgIDToOrgMemberInfo: orgIDToOrgMemberInfo,
@@ -85,13 +92,13 @@ func TestValidations(t *testing.T) {
 
 		// run tests
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
+		orgMemberInfo := user.GetOrgMemberInfo(orgSingleRole.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
 	})
 
-	t.Run("IsAtLeastRole", func(t *testing.T) {
+	t.Run("IsAtLeastRole, single_role_in_hierarchy", func(t *testing.T) {
 		// setup tests
 
 		user, err := client.GetUser(authHeader)
@@ -99,7 +106,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
+		orgMemberInfo := user.GetOrgMemberInfo(orgSingleRole.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -122,7 +129,7 @@ func TestValidations(t *testing.T) {
 		}
 	})
 
-	t.Run("IsRole", func(t *testing.T) {
+	t.Run("IsAtLeastRole, multi_role", func(t *testing.T) {
 		// setup tests
 
 		user, err := client.GetUser(authHeader)
@@ -130,7 +137,69 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
+		orgMemberInfo := user.GetOrgMemberInfo(orgMultiRole.OrgID)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+
+		result := orgMemberInfo.IsAtLeastRole("Role A")
+		if !result {
+			t.Errorf("IsAtLeastRole with Role A should have returned true")
+		}
+
+		result = orgMemberInfo.IsAtLeastRole("Role C")
+		if !result {
+			t.Errorf("IsAtLeastRole with Role C should have returned true")
+		}
+
+		result = orgMemberInfo.IsAtLeastRole("Role D")
+		if result {
+			t.Errorf("IsAtLeastRole with Role D should have returned false")
+		}
+	})
+
+	t.Run("IsRole, multi_role", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		orgMemberInfo := user.GetOrgMemberInfo(orgMultiRole.OrgID)
+		if orgMemberInfo == nil {
+			t.Errorf("GetOrgMemberInfo should have returned something")
+		}
+
+		// run tests
+
+		result := orgMemberInfo.IsRole("Role D")
+		if result {
+			t.Errorf("IsRole with Role D should have returned false")
+		}
+
+		result = orgMemberInfo.IsRole("Role A")
+		if !result {
+			t.Errorf("IsRole with Role A should have returned true")
+		}
+
+		result = orgMemberInfo.IsRole("Role B")
+		if !result {
+			t.Errorf("IsRole with Role B should have returned true")
+		}
+	})
+
+	t.Run("IsRole, single_role_in_hierarchy", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		orgMemberInfo := user.GetOrgMemberInfo(orgSingleRole.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -161,7 +230,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
+		orgMemberInfo := user.GetOrgMemberInfo(orgSingleRole.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
@@ -187,7 +256,7 @@ func TestValidations(t *testing.T) {
 			t.Errorf("GetUser returned an error: %s", err)
 		}
 
-		orgMemberInfo := user.GetOrgMemberInfo(org.OrgID)
+		orgMemberInfo := user.GetOrgMemberInfo(orgSingleRole.OrgID)
 		if orgMemberInfo == nil {
 			t.Errorf("GetOrgMemberInfo should have returned something")
 		}
