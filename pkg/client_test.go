@@ -98,6 +98,38 @@ func TestValidations(t *testing.T) {
 		}
 	})
 
+	t.Run("GetActiveOrgMemberInfo", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		// run tests
+		user.ActiveOrgId = &orgSingleRole.OrgID
+		activeOrgMemberInfo := user.GetActiveOrgMemberInfo()
+		if activeOrgMemberInfo == nil {
+			t.Errorf("GetActiveOrgID should have returned something")
+		}
+	})
+
+	t.Run("GetActiveOrgID", func(t *testing.T) {
+		// setup tests
+
+		user, err := client.GetUser(authHeader)
+		if err != nil {
+			t.Errorf("GetUser returned an error: %s", err)
+		}
+
+		// run tests
+		user.ActiveOrgId = &orgSingleRole.OrgID
+		activeOrgID := user.GetActiveOrgID()
+		if activeOrgID == nil {
+			t.Errorf("GetActiveOrgID should have returned something")
+		}
+	})
+
 	t.Run("IsAtLeastRole, single_role_in_hierarchy", func(t *testing.T) {
 		// setup tests
 
