@@ -24,9 +24,9 @@ type ValidationHelper struct{}
 // ValidateAccessTokenAndGetUser validates the access token and returns the user data. Instead of using this
 // directly, look at client.GetUser(authHeader) instead.
 func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error) {
-	claims := &models.UserFromToken{}
+	userFromToken := &models.UserFromToken{}
 
-	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(accessToken, userFromToken, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("Error decoding JWT: Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -45,12 +45,20 @@ func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tok
 		return nil, fmt.Errorf("Error decoding JWT: unknown error: %w", err)
 	} else if !token.Valid {
 		return nil, fmt.Errorf("Error decoding JWT: invalid token")
-	} else if claims.Issuer != tokenVerificationMetadata.Issuer {
+	} else if userFromToken.Issuer != tokenVerificationMetadata.Issuer {
 		return nil, fmt.Errorf("Error decoding JWT: invalid issuer")
 	}
 
-	userFromToken := AssignActiveOrg(claims)
-	return userFromToken, nil
+	userFromTokenWithActiveOrg := AssignActiveOrg(userFromToken)
+
+	// if the login method is nil, set it to unknown
+	if userFromTokenWithActiveOrg.LoginMethod == nil {
+		userFromTokenWithActiveOrg.LoginMethod = &models.LoginMethod{
+			LoginMethod: "unknown",
+		}
+	}
+
+	return userFromTokenWithActiveOrg, nil
 }
 
 func AssignActiveOrg(userFromToken *models.UserFromToken) *models.UserFromToken {
@@ -63,6 +71,7 @@ func AssignActiveOrg(userFromToken *models.UserFromToken) *models.UserFromToken 
 		userFromToken.OrgMemberInfo = nil
 	}
 	return userFromToken
+
 }
 
 func (o *ValidationHelper) ExtractTokenFromAuthorizationHeader(authHeader string) (string, error) {
