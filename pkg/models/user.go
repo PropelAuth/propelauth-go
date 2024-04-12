@@ -65,6 +65,7 @@ type CreateUserParams struct {
 	FirstName                      *string                 `json:"first_name,omitempty"`
 	LastName                       *string                 `json:"last_name,omitempty"`
 	CanCreateOrgs                  *bool                   `json:"can_create_orgs,omitempty"`
+	AskUserToUpdatePasswordOnLogin *bool                   `json:"ask_user_to_update_password_on_login,omitempty"`
 	Metadata                       *map[string]interface{} `json:"metadata,omitempty"`
 	Properties                     *map[string]interface{} `json:"properties,omitempty"`
 }
