@@ -50,6 +50,7 @@ type ClientInterface interface {
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
+	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
@@ -837,6 +838,27 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	}
 
 	return orgs, nil
+}
+
+// FetchCustomRoleMappings will fetch all custom Role-to-Permissions mappings available.
+func (o *Client) FetchCustomRoleMappings() (*models.CustomRoleMappingList, error) {
+	urlPostfix := "/custom_role_mappings"
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	custom_role_mappings := &models.CustomRoleMappingList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, custom_role_mappings); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CustomRoleMappingList: %w", err)
+	}
+
+	return custom_role_mappings, nil
 }
 
 // NOTE: THIS IS DEPRECATED.
