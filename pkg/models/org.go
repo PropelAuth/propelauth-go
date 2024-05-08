@@ -15,6 +15,7 @@ type OrgMetadata struct {
 	MaxUsers         *int                   `json:"max_users"`
 	Metadata         map[string]interface{} `json:"metadata"`
 	IsSamlConfigured bool                   `json:"is_saml_configured"`
+	LegacyOrgId      string                 `json:"legacy_org_id"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -64,6 +65,7 @@ type CreateOrgV2Params struct {
 	EnableAutoJoiningByDomain     bool   `json:"enable_auto_joining_by_domain,omitempty"`
 	MembersMustHaveMatchingDomain bool   `json:"members_must_have_matching_domain,omitempty"`
 	MaxUsers                      int    `json:"max_users,omitempty"`
+	LegacyOrgId                   string `json:"legacy_org_id,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.
