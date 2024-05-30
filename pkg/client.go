@@ -52,6 +52,7 @@ type ClientInterface interface {
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
@@ -959,6 +960,28 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on updating org metadata: %w", err)
+	}
+
+	return true, nil
+}
+
+// SubscribeOrgToRoleMapping will subscribe the organization to a role mapping.
+// A null value for CustomRoleMappingId will subscribe the org to the default role mapping.
+func (o *Client) SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
 	}
 
 	return true, nil
