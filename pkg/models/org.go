@@ -15,7 +15,6 @@ type OrgMetadata struct {
 	MaxUsers              *int                   `json:"max_users"`
 	Metadata              map[string]interface{} `json:"metadata"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
-	CustomRoleMappingId   *uuid.UUID             `json:"custom_role_mapping_id"`
 	CustomRoleMappingName *string                `json:"custom_role_mapping_name"`
 }
 
@@ -31,7 +30,6 @@ type OrgList struct {
 
 // CustomRoleMapping has the information about a Custom Role-to-Permissions.
 type CustomRoleMapping struct {
-	CustomRoleMappingId     uuid.UUID  `json:"custom_role_mapping_id"`
 	CustomRoleMappingName   string     `json:"custom_role_mapping_name"`
 	NumberOfOrgsSubscribed  *int       `json:"num_orgs_subscribed"`
 }
@@ -64,10 +62,9 @@ type UpdateOrg struct {
 }
 
 // OrgRoleMappingSubscription is the information needed to subscribe an organization to a
-// Custom Role-to-Permissions mapping. A null value for CustomRoleMappingId will subscribe
-// the organization to the default role mapping.
+// Custom Role-to-Permissions mapping.
 type OrgRoleMappingSubscription struct {
-	CustomRoleMappingId *uuid.UUID `json:"custom_role_mapping_id"`
+	CustomRoleMappingName string `json:"custom_role_mapping_name"`
 }
 
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
@@ -86,7 +83,7 @@ type CreateOrgV2Params struct {
 	EnableAutoJoiningByDomain     bool       `json:"enable_auto_joining_by_domain,omitempty"`
 	MembersMustHaveMatchingDomain bool       `json:"members_must_have_matching_domain,omitempty"`
 	MaxUsers                      int        `json:"max_users,omitempty"`
-	CustomRoleMappingId           *uuid.UUID  `json:"custom_role_mapping_id,omitempty"`
+	CustomRoleMappingName         *string    `json:"custom_role_mapping_name,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.

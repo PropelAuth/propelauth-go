@@ -966,7 +966,6 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 }
 
 // SubscribeOrgToRoleMapping will subscribe the organization to a role mapping.
-// A null value for CustomRoleMappingId will subscribe the org to the default role mapping.
 func (o *Client) SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgID)
 
