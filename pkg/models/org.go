@@ -31,13 +31,13 @@ type OrgList struct {
 // CustomRoleMapping has the information about a Custom Role-to-Permissions.
 type CustomRoleMapping struct {
 	CustomRoleMappingName   string     `json:"custom_role_mapping_name"`
-	NumberOfOrgsSubscribed  *int       `json:"num_orgs_subscribed"`
+	NumberOfOrgsSubscribed  int        `json:"num_orgs_subscribed"`
 }
 
 // CustomRoleMappingList is a total list of all Custom Role-to-Permissions available
 // in your environment.
 type CustomRoleMappingList struct {
-	CustomRoleMapping []CustomRoleMapping `json:"custom_role_mappings"`
+	CustomRoleMappings []CustomRoleMapping `json:"custom_role_mappings"`
 }
 
 // post types

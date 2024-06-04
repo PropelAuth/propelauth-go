@@ -843,7 +843,7 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 
 // FetchCustomRoleMappings will fetch all custom Role-to-Permissions mappings available.
 func (o *Client) FetchCustomRoleMappings() (*models.CustomRoleMappingList, error) {
-	urlPostfix := "/custom_role_mappings"
+	urlPostfix := "custom_role_mappings"
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
 	if err != nil {
