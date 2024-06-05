@@ -41,6 +41,7 @@ type ClientInterface interface {
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	ClearUserPassword(userID uuid.UUID) (bool, error)
 	DisableUser2fa(userID uuid.UUID) (bool, error)
+	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -785,6 +786,34 @@ func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on inviting user to org: %w", err)
+	}
+
+	return true, nil
+}
+
+// ResendEmailConfirmation will resend the email confirmation email to a user.
+func (o *Client) ResendEmailConfirmation(userID uuid.UUID) (bool, error) {
+	urlPostfix := "resend_email_confirmation"
+
+	type ResendEmailConfirmationParams struct {
+		UserID uuid.UUID `json:"user_id"`
+	}
+
+	bodyParams := ResendEmailConfirmationParams{
+		UserID: userID,
+	}
+	bodyJSON, err := json.Marshal(bodyParams)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on resending email confirmation to user: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on resending email confirmation to user: %w", err)
 	}
 
 	return true, nil
