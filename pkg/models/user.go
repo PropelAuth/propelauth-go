@@ -36,11 +36,11 @@ type UserMetadata struct {
 
 // OrgInfo is the information about an organization a user is in.
 type OrgInfo struct {
-	OrgID    uuid.UUID `json:"org_id"`
-	OrgName  string    `json:"org_name"`
+	OrgID            uuid.UUID        `json:"org_id"`
+	OrgName          string           `json:"org_name"`
 	OrgRoleStructure OrgRoleStructure `json:"org_role_structure"`
-	UserRole string    `json:"user_role"`
-	AdditionalRoles []string `json:"additional_roles"`
+	UserRole         string           `json:"user_role"`
+	AdditionalRoles  []string         `json:"additional_roles"`
 }
 
 // UserList is a paged list of users. The actual fetched users are in the Users field, and the
