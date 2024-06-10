@@ -51,7 +51,9 @@ type ClientInterface interface {
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
+	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
@@ -868,6 +870,27 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	return orgs, nil
 }
 
+// FetchCustomRoleMappings will fetch all custom Role-to-Permissions mappings available.
+func (o *Client) FetchCustomRoleMappings() (*models.CustomRoleMappingList, error) {
+	urlPostfix := "custom_role_mappings"
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	custom_role_mappings := &models.CustomRoleMappingList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, custom_role_mappings); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CustomRoleMappingList: %w", err)
+	}
+
+	return custom_role_mappings, nil
+}
+
 // NOTE: THIS IS DEPRECATED.
 // CreateOrg will an organization and return its data, which is mostly just the org's ID.
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
@@ -966,6 +989,27 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on updating org metadata: %w", err)
+	}
+
+	return true, nil
+}
+
+// SubscribeOrgToRoleMapping will subscribe the organization to a role mapping.
+func (o *Client) SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
 	}
 
 	return true, nil
