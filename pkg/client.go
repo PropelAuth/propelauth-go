@@ -41,6 +41,7 @@ type ClientInterface interface {
 	DisableUserCanCreateOrgs(userID uuid.UUID) (bool, error)
 	ClearUserPassword(userID uuid.UUID) (bool, error)
 	DisableUser2fa(userID uuid.UUID) (bool, error)
+	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -50,7 +51,9 @@ type ClientInterface interface {
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
+	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
+	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 
 	// user in org endpoints
@@ -790,6 +793,34 @@ func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
 	return true, nil
 }
 
+// ResendEmailConfirmation will resend the email confirmation email to a user.
+func (o *Client) ResendEmailConfirmation(userID uuid.UUID) (bool, error) {
+	urlPostfix := "resend_email_confirmation"
+
+	type ResendEmailConfirmationParams struct {
+		UserID uuid.UUID `json:"user_id"`
+	}
+
+	bodyParams := ResendEmailConfirmationParams{
+		UserID: userID,
+	}
+	bodyJSON, err := json.Marshal(bodyParams)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on resending email confirmation to user: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on resending email confirmation to user: %w", err)
+	}
+
+	return true, nil
+}
+
 // public methods for orgs
 
 // FetchOrg will fetch an org's data.
@@ -837,6 +868,27 @@ func (o *Client) FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList,
 	}
 
 	return orgs, nil
+}
+
+// FetchCustomRoleMappings will fetch all custom Role-to-Permissions mappings available.
+func (o *Client) FetchCustomRoleMappings() (*models.CustomRoleMappingList, error) {
+	urlPostfix := "custom_role_mappings"
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching custom_role_mappings: %w", err)
+	}
+
+	custom_role_mappings := &models.CustomRoleMappingList{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, custom_role_mappings); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to CustomRoleMappingList: %w", err)
+	}
+
+	return custom_role_mappings, nil
 }
 
 // NOTE: THIS IS DEPRECATED.
@@ -937,6 +989,27 @@ func (o *Client) UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bo
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on updating org metadata: %w", err)
+	}
+
+	return true, nil
+}
+
+// SubscribeOrgToRoleMapping will subscribe the organization to a role mapping.
+func (o *Client) SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error) {
+	urlPostfix := fmt.Sprintf("org/%s", orgID)
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Put(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on subscribing org to a role mapping: %w", err)
 	}
 
 	return true, nil

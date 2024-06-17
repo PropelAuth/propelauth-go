@@ -10,12 +10,13 @@ import (
 
 // OrgMetadata has the information about the organziation.
 type OrgMetadata struct {
-	OrgID            uuid.UUID              `json:"org_id"`
-	Name             string                 `json:"org_name"`
-	MaxUsers         *int                   `json:"max_users"`
-	Metadata         map[string]interface{} `json:"metadata"`
-	IsSamlConfigured bool                   `json:"is_saml_configured"`
-	LegacyOrgId      string                 `json:"legacy_org_id"`
+	OrgID                 uuid.UUID              `json:"org_id"`
+	Name                  string                 `json:"org_name"`
+	MaxUsers              *int                   `json:"max_users"`
+	Metadata              map[string]interface{} `json:"metadata"`
+	IsSamlConfigured      bool                   `json:"is_saml_configured"`
+	CustomRoleMappingName *string                `json:"custom_role_mapping_name"`
+	LegacyOrgId           string                 `json:"legacy_org_id"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -26,6 +27,18 @@ type OrgList struct {
 	PageSize       int           `json:"page_size"`
 	HasMoreResults bool          `json:"has_more_results"`
 	Orgs           []OrgMetadata `json:"orgs"`
+}
+
+// CustomRoleMapping has the information about a Custom Role-to-Permissions.
+type CustomRoleMapping struct {
+	CustomRoleMappingName   string     `json:"custom_role_mapping_name"`
+	NumberOfOrgsSubscribed  int        `json:"num_orgs_subscribed"`
+}
+
+// CustomRoleMappingList is a total list of all Custom Role-to-Permissions available
+// in your environment.
+type CustomRoleMappingList struct {
+	CustomRoleMappings []CustomRoleMapping `json:"custom_role_mappings"`
 }
 
 // post types
@@ -49,6 +62,12 @@ type UpdateOrg struct {
 	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
 }
 
+// OrgRoleMappingSubscription is the information needed to subscribe an organization to a
+// Custom Role-to-Permissions mapping.
+type OrgRoleMappingSubscription struct {
+	CustomRoleMappingName string `json:"custom_role_mapping_name"`
+}
+
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
 // defaults to 10 and PageNumber defaults to 0.
 type OrgQueryParams struct {
@@ -60,12 +79,13 @@ type OrgQueryParams struct {
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
 type CreateOrgV2Params struct {
-	Name                          string `json:"name"`
-	Domain                        string `json:"domain,omitempty"`
-	EnableAutoJoiningByDomain     bool   `json:"enable_auto_joining_by_domain,omitempty"`
-	MembersMustHaveMatchingDomain bool   `json:"members_must_have_matching_domain,omitempty"`
-	MaxUsers                      int    `json:"max_users,omitempty"`
-	LegacyOrgId                   string `json:"legacy_org_id,omitempty"`
+	Name                          string     `json:"name"`
+	Domain                        string     `json:"domain,omitempty"`
+	EnableAutoJoiningByDomain     bool       `json:"enable_auto_joining_by_domain,omitempty"`
+	MembersMustHaveMatchingDomain bool       `json:"members_must_have_matching_domain,omitempty"`
+	MaxUsers                      int        `json:"max_users,omitempty"`
+	CustomRoleMappingName         *string    `json:"custom_role_mapping_name,omitempty"`
+	LegacyOrgId                   string     `json:"legacy_org_id,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.
