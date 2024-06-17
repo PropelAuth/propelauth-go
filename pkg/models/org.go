@@ -16,6 +16,7 @@ type OrgMetadata struct {
 	Metadata              map[string]interface{} `json:"metadata"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
 	CustomRoleMappingName *string                `json:"custom_role_mapping_name"`
+	LegacyOrgId           string                 `json:"legacy_org_id"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -78,12 +79,13 @@ type OrgQueryParams struct {
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
 type CreateOrgV2Params struct {
-	Name                          string  `json:"name"`
-	Domain                        string  `json:"domain,omitempty"`
-	EnableAutoJoiningByDomain     bool    `json:"enable_auto_joining_by_domain,omitempty"`
-	MembersMustHaveMatchingDomain bool    `json:"members_must_have_matching_domain,omitempty"`
-	MaxUsers                      int     `json:"max_users,omitempty"`
-	CustomRoleMappingName         *string `json:"custom_role_mapping_name,omitempty"`
+	Name                          string     `json:"name"`
+	Domain                        string     `json:"domain,omitempty"`
+	EnableAutoJoiningByDomain     bool       `json:"enable_auto_joining_by_domain,omitempty"`
+	MembersMustHaveMatchingDomain bool       `json:"members_must_have_matching_domain,omitempty"`
+	MaxUsers                      int        `json:"max_users,omitempty"`
+	CustomRoleMappingName         *string    `json:"custom_role_mapping_name,omitempty"`
+	LegacyOrgId                   *string    `json:"legacy_org_id,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.
