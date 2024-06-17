@@ -85,6 +85,7 @@ type MigrateUserParams struct {
 	Username                       *string                 `json:"username,omitempty"`
 	FirstName                      *string                 `json:"first_name,omitempty"`
 	LastName                       *string                 `json:"last_name,omitempty"`
+	PictureUrl                     *string                 `json:"picture_url,omitempty"`
 	UpdatePasswordRequired         *bool                   `json:"update_password_required,omitempty"`
 	Properties                     *map[string]interface{} `json:"properties,omitempty"`
 }

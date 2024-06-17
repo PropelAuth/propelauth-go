@@ -42,6 +42,7 @@ type ClientInterface interface {
 	ClearUserPassword(userID uuid.UUID) (bool, error)
 	DisableUser2fa(userID uuid.UUID) (bool, error)
 	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
+	LogoutAllUserSessions(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -52,6 +53,7 @@ type ClientInterface interface {
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
+	FetchPendingInvites(params models.FetchPendingInvitesParams) (*models.PendingInvitesPage, error)
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
 	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
@@ -821,6 +823,22 @@ func (o *Client) ResendEmailConfirmation(userID uuid.UUID) (bool, error) {
 	return true, nil
 }
 
+// LogoutAllUserSessions will log out all of a user's sessions.
+func (o *Client) LogoutAllUserSessions(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/logout_all_sessions", userID)
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on logging out all user sessions : %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on logging out all user sessions: %w", err)
+	}
+
+	return true, nil
+}
+
 // public methods for orgs
 
 // FetchOrg will fetch an org's data.
@@ -889,6 +907,39 @@ func (o *Client) FetchCustomRoleMappings() (*models.CustomRoleMappingList, error
 	}
 
 	return custom_role_mappings, nil
+}
+
+// FetchPendingInvites will fetch a paged list of pending invites.
+func (o *Client) FetchPendingInvites(params models.FetchPendingInvitesParams) (*models.PendingInvitesPage, error) {
+	urlPostfix := "pending_org_invites"
+
+	queryParams := url.Values{}
+
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
+	if params.PageSize != nil {
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
+	}
+	if params.OrgID != nil {
+		queryParams.Add("org_id", params.OrgID.String())
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching pending invites: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching pending invites: %w", err)
+	}
+
+	pendingInvites := &models.PendingInvitesPage{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, pendingInvites); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to PendingInvitesPage: %w", err)
+	}
+
+	return pendingInvites, nil
 }
 
 // NOTE: THIS IS DEPRECATED.
