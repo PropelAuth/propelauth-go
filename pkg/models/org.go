@@ -30,8 +30,8 @@ type OrgList struct {
 
 // CustomRoleMapping has the information about a Custom Role-to-Permissions.
 type CustomRoleMapping struct {
-	CustomRoleMappingName   string     `json:"custom_role_mapping_name"`
-	NumberOfOrgsSubscribed  int        `json:"num_orgs_subscribed"`
+	CustomRoleMappingName  string `json:"custom_role_mapping_name"`
+	NumberOfOrgsSubscribed int    `json:"num_orgs_subscribed"`
 }
 
 // CustomRoleMappingList is a total list of all Custom Role-to-Permissions available
@@ -78,12 +78,12 @@ type OrgQueryParams struct {
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
 type CreateOrgV2Params struct {
-	Name                          string     `json:"name"`
-	Domain                        string     `json:"domain,omitempty"`
-	EnableAutoJoiningByDomain     bool       `json:"enable_auto_joining_by_domain,omitempty"`
-	MembersMustHaveMatchingDomain bool       `json:"members_must_have_matching_domain,omitempty"`
-	MaxUsers                      int        `json:"max_users,omitempty"`
-	CustomRoleMappingName         *string    `json:"custom_role_mapping_name,omitempty"`
+	Name                          string  `json:"name"`
+	Domain                        string  `json:"domain,omitempty"`
+	EnableAutoJoiningByDomain     bool    `json:"enable_auto_joining_by_domain,omitempty"`
+	MembersMustHaveMatchingDomain bool    `json:"members_must_have_matching_domain,omitempty"`
+	MaxUsers                      int     `json:"max_users,omitempty"`
+	CustomRoleMappingName         *string `json:"custom_role_mapping_name,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.
@@ -127,4 +127,30 @@ func (o *OrgRoleStructure) UnmarshalJSON(data []byte) error {
 
 	*o = o.FromString(s)
 	return nil
+}
+
+type PendingInvite struct {
+	InviteeEmail         string     `json:"invitee_email"`
+	OrgID                uuid.UUID  `json:"org_id"`
+	OrgName              string     `json:"org_name"`
+	RoleInOrg            string     `json:"role_in_org"`
+	AdditionalRolesInOrg []string   `json:"additional_roles_in_org"`
+	CreatedAt            int64      `json:"created_at"`
+	ExpiresAt            int64      `json:"expires_at"`
+	InviterEmail         *string    `json:"inviter_email"`
+	InviterUserID        *uuid.UUID `json:"inviter_user_id"`
+}
+
+type PendingInvitesPage struct {
+	TotalInvites   int             `json:"total_invites"`
+	CurrentPage    int             `json:"current_page"`
+	PageSize       int             `json:"page_size"`
+	HasMoreResults bool            `json:"has_more_results"`
+	Invites        []PendingInvite `json:"invites"`
+}
+
+type FetchPendingInvitesParams struct {
+	PageSize   *int       `json:"page_size,omitempty"`
+	PageNumber *int       `json:"page_number,omitempty"`
+	OrgID      *uuid.UUID `json:"org_id,omitempty"`
 }
