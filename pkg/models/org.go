@@ -85,7 +85,7 @@ type CreateOrgV2Params struct {
 	MembersMustHaveMatchingDomain bool       `json:"members_must_have_matching_domain,omitempty"`
 	MaxUsers                      int        `json:"max_users,omitempty"`
 	CustomRoleMappingName         *string    `json:"custom_role_mapping_name,omitempty"`
-	LegacyOrgId                   string     `json:"legacy_org_id,omitempty"`
+	LegacyOrgId                   *string     `json:"legacy_org_id,omitempty"`
 }
 
 // CreateOrgV2Response is the information returned when creating an organization.
