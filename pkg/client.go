@@ -42,6 +42,7 @@ type ClientInterface interface {
 	ClearUserPassword(userID uuid.UUID) (bool, error)
 	DisableUser2fa(userID uuid.UUID) (bool, error)
 	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
+	LogoutAllUserSessions(userID uuid.UUID) (bool, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -816,6 +817,22 @@ func (o *Client) ResendEmailConfirmation(userID uuid.UUID) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on resending email confirmation to user: %w", err)
+	}
+
+	return true, nil
+}
+
+// LogoutAllUserSessions will log out all of a user's sessions.
+func (o *Client) LogoutAllUserSessions(userID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("user/%s/logout_all_sessions", userID)
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on logging out all user sessions : %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on logging out all user sessions: %w", err)
 	}
 
 	return true, nil
