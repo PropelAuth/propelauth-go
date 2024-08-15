@@ -57,6 +57,7 @@ type ClientInterface interface {
 	UpdateOrgMetadata(orgID uuid.UUID, params models.UpdateOrg) (bool, error)
 	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
+	RevokePendingOrgInvite(params models.RevokePendingOrgInvite) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -579,7 +580,7 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 func (o *Client) DeleteUser(userID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("user/%s", userID)
 
-	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on deleting user: %w", err)
 	}
@@ -942,6 +943,26 @@ func (o *Client) FetchPendingInvites(params models.FetchPendingInvitesParams) (*
 	return pendingInvites, nil
 }
 
+func (o *Client) RevokePendingOrgInvite(params models.RevokePendingOrgInvite) (bool, error) {
+	urlPostfix := "pending_org_invites"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error deleting pending org invite: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error deleting pending org invite: %w", err)
+	}
+
+	return true, nil
+}
+
 // NOTE: THIS IS DEPRECATED.
 // CreateOrg will an organization and return its data, which is mostly just the org's ID.
 func (o *Client) CreateOrg(name string) (*models.OrgMetadata, error) {
@@ -1011,7 +1032,7 @@ func (o *Client) CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrg
 func (o *Client) DeleteOrg(orgID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgID)
 
-	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on deleting an org: %w", err)
 	}
@@ -1168,7 +1189,7 @@ func (o *Client) UpdateAPIKey(apiKeyID string, params models.APIKeyUpdateParams)
 func (o *Client) DeleteAPIKey(apiKeyID string) (bool, error) {
 	urlPostfix := fmt.Sprintf("end_user_api_keys/%s", apiKeyID)
 
-	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil)
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil, nil)
 	if err != nil {
 		return false, fmt.Errorf("Error on deleting an API key: %w", err)
 	}
