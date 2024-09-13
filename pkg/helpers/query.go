@@ -23,7 +23,7 @@ type QueryHelperInterface interface {
 	Patch(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 	Post(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 	Put(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
-	Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error)
+	Delete(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error)
 }
 
 type QueryHelper struct {
@@ -64,10 +64,10 @@ func (o *QueryHelper) Put(token string, urlPostfix string, queryParams url.Value
 	return o.RequestHelper("PUT", token, url, bodyParams)
 }
 
-func (o *QueryHelper) Delete(token string, urlPostfix string, queryParams url.Values) (*QueryResponse, error) {
+func (o *QueryHelper) Delete(token string, urlPostfix string, queryParams url.Values, bodyParams []byte) (*QueryResponse, error) {
 	url := o.assembleURL(urlPostfix, queryParams)
 
-	return o.RequestHelper("DELETE", token, url, nil)
+	return o.RequestHelper("DELETE", token, url, bodyParams)
 }
 
 // public helper method
@@ -84,7 +84,7 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 	// add headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("User-Agent", "propelauth-go/0.8 go/" + runtime.Version() + " " + runtime.GOOS + "/" + runtime.GOARCH)
+	req.Header.Set("User-Agent", "propelauth-go/0.8 go/"+runtime.Version()+" "+runtime.GOOS+"/"+runtime.GOARCH)
 
 	// send request
 	client := &http.Client{}
