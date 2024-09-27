@@ -60,6 +60,7 @@ type UpdateOrg struct {
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 	Domain           *string                 `json:"domain,omitempty"`
 	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
+	LegacyOrgId      *string                 `json:"legacy_org_id,omitempty"`
 }
 
 // OrgRoleMappingSubscription is the information needed to subscribe an organization to a
@@ -71,10 +72,11 @@ type OrgRoleMappingSubscription struct {
 // OrgQueryParams is the information for querying a pageable organization list. If left blank, PageSize
 // defaults to 10 and PageNumber defaults to 0.
 type OrgQueryParams struct {
-	PageSize   *int    `json:"page_size,omitempty"`
-	PageNumber *int    `json:"page_number,omitempty"`
-	OrderBy    *string `json:"order_by,omitempty"`
-	Name       *string `json:"name,omitempty"`
+	PageSize    *int    `json:"page_size,omitempty"`
+	PageNumber  *int    `json:"page_number,omitempty"`
+	OrderBy     *string `json:"order_by,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	LegacyOrgId *string `json:"legacy_org_id,omitempty"`
 }
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
