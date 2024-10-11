@@ -163,3 +163,12 @@ type RevokePendingOrgInvite struct {
 	OrgID        *uuid.UUID `json:"org_id,omitempty"`
 	InviteeEmail string     `json:"invitee_email"`
 }
+
+// CreateSamlConnectionLinkBody is the information needed to create a SAML connection link.
+type CreateSamlConnectionLinkBody struct {
+	ExpiresInSeconds *int `json:"expires_in_seconds,omitempty"`
+}
+
+type CreateSamlConnectionLinkResponse struct {
+	URL string `json:"url"`
+}
