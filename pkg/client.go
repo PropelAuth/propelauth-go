@@ -50,7 +50,6 @@ type ClientInterface interface {
 	CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error)
 	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
-	CreateOrgSamlConnectionLink(orgID uuid.UUID, params models.CreateSamlConnectionLinkBody) (*models.CreateSamlConnectionLinkResponse, error)
 	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
@@ -59,6 +58,11 @@ type ClientInterface interface {
 	SubscribeOrgToRoleMapping(orgID uuid.UUID, params models.OrgRoleMappingSubscription) (bool, error)
 	ChangeUserRoleInOrg(params models.ChangeUserRoleInOrg) (bool, error)
 	RevokePendingOrgInvite(params models.RevokePendingOrgInvite) (bool, error)
+	CreateOrgSamlConnectionLink(orgID uuid.UUID, params models.CreateSamlConnectionLinkBody) (*models.CreateSamlConnectionLinkResponse, error)
+	FetchSamlSpMetadata(orgID uuid.UUID) (*models.SamlSpMetadata, error)
+	SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error)
+	SamlGoLive(orgId uuid.UUID) (bool, error)
+	DeleteSamlConnection(orgId uuid.UUID) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -1144,6 +1148,80 @@ func (o *Client) CreateOrgSamlConnectionLink(orgID uuid.UUID, params models.Crea
 	}
 
 	return newUrl, nil
+}
+
+// FetchSamlSpMetadata will fetch the Service Provider metadata needed to configure a SAML connection for an org.
+func (o *Client) FetchSamlSpMetadata(orgID uuid.UUID) (*models.SamlSpMetadata, error) {
+	urlPostfix := fmt.Sprintf("saml_sp_metadata/%s", orgID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching SAML SP Metadata for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching SAML SP Metadata for org: %w", err)
+	}
+
+	spMetadata := &models.SamlSpMetadata{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, spMetadata); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to FetchSamlSpMetadata: %w", err)
+	}
+
+	return spMetadata, nil
+}
+
+// SetSamlIdpMetadata will set the Identity Provider metadata needed to configure a SAML connection for an org.
+func (o *Client) SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error) {
+	urlPostfix := "saml_idp_metadata"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on setting SAML IDP Metadata for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on setting SAML IDP Metadata for org: %w", err)
+	}
+
+	return true, nil
+}
+
+// SamlGoLive will set the SAML connection for an org to be live.
+func (o *Client) SamlGoLive(orgID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("saml_idp_metadata/go_live/%s", orgID)
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on setting SAML connection to live for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on setting SAML connection to live for org: %w", err)
+	}
+
+	return true, nil
+}
+
+// DeleteSamlConnection will delete the SAML connection for an org.
+func (o *Client) DeleteSamlConnection(orgID uuid.UUID) (bool, error) {
+	urlPostfix := fmt.Sprintf("saml_idp_metadata/%s", orgID)
+
+	queryResponse, err := o.queryHelper.Delete(o.integrationAPIKey, urlPostfix, nil, nil)
+	if err != nil {
+		return false, fmt.Errorf("Error on deleting SAML connection for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on deleting SAML connection for org: %w", err)
+	}
+
+	return true, nil
 }
 
 // public methods for managing API Keys
