@@ -1175,6 +1175,18 @@ func (o *Client) FetchSamlSpMetadata(orgID uuid.UUID) (*models.SamlSpMetadata, e
 func (o *Client) SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error) {
 	urlPostfix := "saml_idp_metadata"
 
+	// check that provider is valid
+	valid_providers := []string{"Google", "Rippling", "OneLogin", "JumpCloud", "Okta", "Azure", "Duo", "Generic"}
+	is_valid_provider := false
+	for _, provider := range valid_providers {
+		if params.Provider == provider {
+			is_valid_provider = true
+		}
+	}
+	if !is_valid_provider {
+		return false, fmt.Errorf("Error on setting SAML IDP Metadata for org: provider must be one of %v", valid_providers)
+	}
+
 	bodyJSON, err := json.Marshal(params)
 	if err != nil {
 		return false, fmt.Errorf("Error on marshalling body params: %w", err)
