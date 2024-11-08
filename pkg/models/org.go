@@ -77,6 +77,7 @@ type OrgQueryParams struct {
 	OrderBy     *string `json:"order_by,omitempty"`
 	Name        *string `json:"name,omitempty"`
 	LegacyOrgId *string `json:"legacy_org_id,omitempty"`
+	Domain      *string `json:"domain,omitempty"`
 }
 
 // CreateOrgV2Params is the information needed to create an organization, as well as some optional fields.
