@@ -173,3 +173,17 @@ type CreateSamlConnectionLinkBody struct {
 type CreateSamlConnectionLinkResponse struct {
 	URL string `json:"url"`
 }
+
+type SamlSpMetadata struct {
+	EntityId  string `json:"entity_id"`
+	AcsUrl    string `json:"acs_url"`
+	LogoutUrl string `json:"logout_url"`
+}
+
+type SamlIdpMetadata struct {
+	OrgId 	uuid.UUID `json:"org_id"`
+	IdpEntityId string `json:"idp_entity_id"`
+	IdpSsoUrl string `json:"idp_sso_url"`
+	IdpCertificate string `json:"idp_certificate"`
+	Provider string `json:"provider"`
+}
