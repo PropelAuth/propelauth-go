@@ -75,3 +75,13 @@ type APIKeyUpdateParams struct {
 	ExpiresAtSeconds *int                    `json:"expires_at_seconds,omitempty"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 }
+
+type ApiKeyRateLimitError struct {
+    WaitSeconds float64 `json:"wait_seconds"`
+	ErrorCode   string  `json:"error_code"`
+	UserFacingError string `json:"user_facing_error"`
+}
+
+func (e *ApiKeyRateLimitError) Error() string {
+    return e.UserFacingError
+}
