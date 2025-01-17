@@ -1460,6 +1460,15 @@ func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, e
 	}
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		if queryResponse.StatusCode == 429 {
+			rateLimitError := &models.ApiKeyRateLimitError{}
+			err = json.Unmarshal(queryResponse.BodyBytes, rateLimitError)
+			if err != nil {
+				return nil, fmt.Errorf("Error on unmarshalling bytes to ApiKeyRateLimitError: %w", err)
+			} else {
+				return nil, rateLimitError
+			}
+		}
 		return nil, fmt.Errorf("Error on validating an API Key: %w", err)
 	}
 
