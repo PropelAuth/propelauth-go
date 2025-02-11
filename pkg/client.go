@@ -137,6 +137,8 @@ func InitBaseAuth(authURL string, integrationAPIKey string, tokenVerificationMet
 				return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
 			case 404:
 				return nil, fmt.Errorf("URL is incorrect")
+			case 429:
+				return nil, fmt.Errorf("Rate limit exceeded")
 			default:
 				return nil, fmt.Errorf("Unknown error when fetching token verification metadata. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.BodyText)
 			}
@@ -1462,10 +1464,13 @@ func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, e
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		if queryResponse.StatusCode == 429 {
 			rateLimitError := &models.ApiKeyRateLimitError{}
-			err = json.Unmarshal(queryResponse.BodyBytes, rateLimitError)
-			if err != nil {
-				return nil, fmt.Errorf("Error on unmarshalling bytes to ApiKeyRateLimitError: %w", err)
+			errParsingJsonToEndUserRateLimit := json.Unmarshal(queryResponse.BodyBytes, rateLimitError)
+			if errParsingJsonToEndUserRateLimit != nil {
+				// this is the case where the caller has hit a PropelAuth rate limit
+				return nil, err
 			} else {
+				// this is the case where the end user's api key has hit a rate limit
+				// configured in the PropelAuth dashboard
 				return nil, rateLimitError
 			}
 		}
@@ -1596,7 +1601,7 @@ func (o *Client) returnErrorMessageIfNotOk(queryResponse *helpers.QueryResponse)
 		case 426:
 			return fmt.Errorf("Cannot use organizations unless B2B support is enabled--enable it in your PropelAuth dashboard")
 		case 429:
-			return fmt.Errorf("Your app is making too many requests, too quickly")
+			return fmt.Errorf("%s", queryResponse.BodyText)
 		default:
 			return fmt.Errorf("Unknown error when performing operation. Status code: %s. Body: %s", strconv.Itoa(queryResponse.StatusCode), queryResponse.BodyText)
 		}
