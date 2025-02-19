@@ -14,7 +14,8 @@ import (
 	"github.com/propelauth/propelauth-go/pkg/models"
 )
 
-const backendURLApiPrefix = "/api/backend/v1/"
+const backendURLApiOrigin = "https://propelauth-api.com"
+const backendURLApiPrefix = backendURLApiOrigin + "/api/backend/v1/"
 
 // ClientInterface contains all the methods for interacting with the PropelAuth backend and the JWT.
 // It's also a convient listing of all the methods available to the integration programmer.
@@ -102,27 +103,27 @@ type Client struct {
 // The authURL and integrationAPIKey can be found in your PropelAuth dashboard, in the "Backend Integrations" section.
 // You can pass in a tokenVerificationMetadata if you have it, but it's not required.
 func InitBaseAuth(authURL string, integrationAPIKey string, tokenVerificationMetadataInput *models.TokenVerificationMetadataInput) (ClientInterface, error) {
-	// setup helpers
-	queryHelper := helpers.NewQueryHelper(authURL, backendURLApiPrefix)
-	validationHelper := &helpers.ValidationHelper{}
-
 	// validate the authURL
-	url, err := url.ParseRequestURI(authURL)
+	parsedAuthUrl, err := url.ParseRequestURI(authURL)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't parse the authURL: %w", err)
-	} else if url.Scheme != "https" {
+	} else if parsedAuthUrl.Scheme != "https" {
 		return nil, fmt.Errorf("URL must start with https://")
-	} else if url.Path != "" {
+	} else if parsedAuthUrl.Path != "" {
 		return nil, fmt.Errorf("URL must not end with a trailing slash")
-	} else if url.Host == "" {
+	} else if parsedAuthUrl.Host == "" {
 		return nil, fmt.Errorf("Invalid URL")
 	}
+
+	// setup helpers
+	queryHelper := helpers.NewQueryHelper(parsedAuthUrl.Host, backendURLApiPrefix)
+	validationHelper := &helpers.ValidationHelper{}
 
 	var tokenVerificationMetadata *models.TokenVerificationMetadata
 
 	// if tokenVerificationMetadata wasn't passed in, create one
 	if tokenVerificationMetadataInput == nil {
-		endpointURL := "https://" + url.Host + "/api/v1/token_verification_metadata"
+		endpointURL := backendURLApiOrigin + "/api/v1/token_verification_metadata"
 
 		queryResponse, err := queryHelper.RequestHelper("GET", integrationAPIKey, endpointURL, nil)
 		if err != nil {
