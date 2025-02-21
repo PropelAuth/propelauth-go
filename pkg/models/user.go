@@ -92,7 +92,7 @@ type MigrateUserParams struct {
 
 // UpdateEmailParams is the information needed to update a user's email address.
 type UpdateEmail struct {
-	Email                    string `json:"email"`
+	Email                    string `json:"new_email"`
 	RequireEmailConfirmation bool   `json:"require_email_confirmation"`
 }
 
