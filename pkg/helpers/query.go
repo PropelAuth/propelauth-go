@@ -27,13 +27,13 @@ type QueryHelperInterface interface {
 }
 
 type QueryHelper struct {
-	urlPrefix           string
+	authHostname        string
 	backendURLAPIPrefix string
 }
 
-func NewQueryHelper(urlPrefix string, backendURLAPIPrefix string) *QueryHelper {
+func NewQueryHelper(authHostname string, backendURLAPIPrefix string) *QueryHelper {
 	return &QueryHelper{
-		urlPrefix:           urlPrefix,
+		authHostname:        authHostname,
 		backendURLAPIPrefix: backendURLAPIPrefix,
 	}
 }
@@ -84,6 +84,7 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 	// add headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Propelauth-url", o.authHostname)
 	req.Header.Set("User-Agent", "propelauth-go/0.8 go/"+runtime.Version()+" "+runtime.GOOS+"/"+runtime.GOARCH)
 
 	// send request
@@ -117,7 +118,7 @@ func (o *QueryHelper) RequestHelper(method string, token string, url string, bod
 // private helper methods
 
 func (o *QueryHelper) assembleURL(urlPostfix string, queryParams url.Values) string {
-	url := o.urlPrefix + o.backendURLAPIPrefix + urlPostfix
+	url := o.backendURLAPIPrefix + urlPostfix
 	if queryParams != nil {
 		url += "?" + queryParams.Encode()
 	}
