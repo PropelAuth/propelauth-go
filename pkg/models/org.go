@@ -9,14 +9,32 @@ import (
 // return types
 
 // OrgMetadata has the information about the organziation.
+type OrgCompleteMetadata struct {
+	OrgID                 uuid.UUID              `json:"org_id"`
+	Name                  string                 `json:"org_name"`
+	UrlSafeOrgSlud		  string                 `json:"url_safe_org_slug"`
+	CanSetupSaml		  bool                   `json:"can_setup_saml"`
+	IsSamlConfigured      bool                   `json:"is_saml_configured"`
+	IsSamlInTestMode      bool                   `json:"is_saml_in_test_mode"`
+	Domain                *string                `json:"domain"`
+	ExtraDomains		  []string               `json:"extra_domains"`
+	DomainAutojoin        bool				     `json:"domain_autojoin"`
+	DomainRestrict        bool     		         `json:"domain_restrict"`
+	Metadata              map[string]interface{} `json:"metadata"`
+	MaxUsers              *int                   `json:"max_users"`
+	LegacyOrgId           *string                `json:"legacy_org_id"`
+	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
+}
+
+// OrgMetadata has the information about the organziation.
 type OrgMetadata struct {
 	OrgID                 uuid.UUID              `json:"org_id"`
 	Name                  string                 `json:"org_name"`
 	MaxUsers              *int                   `json:"max_users"`
 	Metadata              map[string]interface{} `json:"metadata"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
-	CustomRoleMappingName *string                `json:"custom_role_mapping_name"`
-	LegacyOrgId           string                 `json:"legacy_org_id"`
+	LegacyOrgId           *string                `json:"legacy_org_id"`
+	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
