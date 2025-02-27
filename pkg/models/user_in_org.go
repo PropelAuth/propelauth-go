@@ -22,10 +22,10 @@ type UserInOrgQueryParams struct {
 // they can be changed via your dashboard. If you've configured multiple roles per user in your project,
 // you can also include additional_roles to add multiple roles to a user in an organization.
 type AddUserToOrg struct {
-	UserID uuid.UUID `json:"user_id"`
-	OrgID  uuid.UUID `json:"org_id"`
-	Role   string    `json:"role"`
-	AdditionalRoles []string `json:"additional_roles,omitempty"`
+	UserID          uuid.UUID `json:"user_id"`
+	OrgID           uuid.UUID `json:"org_id"`
+	Role            string    `json:"role"`
+	AdditionalRoles []string  `json:"additional_roles,omitempty"`
 }
 
 // RemoveUserFromOrg is the information needed to remove a user from an organization.
@@ -39,10 +39,10 @@ type RemoveUserFromOrg struct {
 // Admin, or Member, but they can be changed via your dashboard. If you've configured multiple roles per user in your project,
 // you can also include additional_roles to add multiple roles to a user in an organization.
 type InviteUserToOrg struct {
-	Email string    `json:"email"`
-	OrgID uuid.UUID `json:"org_id"`
-	Role  string    `json:"role"`
-	AdditionalRoles []string `json:"additional_roles,omitempty"`
+	Email           string    `json:"email"`
+	OrgID           uuid.UUID `json:"org_id"`
+	Role            string    `json:"role"`
+	AdditionalRoles []string  `json:"additional_roles,omitempty"`
 }
 
 // ChangeUserRoleInOrg is the information needed to change a user's role in an organization. Role is
@@ -50,8 +50,8 @@ type InviteUserToOrg struct {
 // Admin, or Member, but they can be changed via your dashboard. If you've configured multiple roles per user in your project,
 // you can also include additional_roles to add multiple roles to a user in an organization.
 type ChangeUserRoleInOrg struct {
-	UserID uuid.UUID `json:"user_id"`
-	OrgID  uuid.UUID `json:"org_id"`
-	Role   string    `json:"role"`
-	AdditionalRoles []string `json:"additional_roles,omitempty"`
+	UserID          uuid.UUID `json:"user_id"`
+	OrgID           uuid.UUID `json:"org_id"`
+	Role            string    `json:"role"`
+	AdditionalRoles []string  `json:"additional_roles,omitempty"`
 }

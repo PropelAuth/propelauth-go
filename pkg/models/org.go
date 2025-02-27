@@ -12,14 +12,14 @@ import (
 type OrgCompleteMetadata struct {
 	OrgID                 uuid.UUID              `json:"org_id"`
 	Name                  string                 `json:"org_name"`
-	UrlSafeOrgSlud		  string                 `json:"url_safe_org_slug"`
-	CanSetupSaml		  bool                   `json:"can_setup_saml"`
+	UrlSafeOrgSlud        string                 `json:"url_safe_org_slug"`
+	CanSetupSaml          bool                   `json:"can_setup_saml"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
 	IsSamlInTestMode      bool                   `json:"is_saml_in_test_mode"`
 	Domain                *string                `json:"domain"`
-	ExtraDomains		  []string               `json:"extra_domains"`
-	DomainAutojoin        bool				     `json:"domain_autojoin"`
-	DomainRestrict        bool     		         `json:"domain_restrict"`
+	ExtraDomains          []string               `json:"extra_domains"`
+	DomainAutojoin        bool                   `json:"domain_autojoin"`
+	DomainRestrict        bool                   `json:"domain_restrict"`
 	Metadata              map[string]interface{} `json:"metadata"`
 	MaxUsers              *int                   `json:"max_users"`
 	LegacyOrgId           *string                `json:"legacy_org_id"`
@@ -199,9 +199,9 @@ type SamlSpMetadata struct {
 }
 
 type SamlIdpMetadata struct {
-	OrgId 	uuid.UUID `json:"org_id"`
-	IdpEntityId string `json:"idp_entity_id"`
-	IdpSsoUrl string `json:"idp_sso_url"`
-	IdpCertificate string `json:"idp_certificate"`
-	Provider string `json:"provider"`
+	OrgId          uuid.UUID `json:"org_id"`
+	IdpEntityId    string    `json:"idp_entity_id"`
+	IdpSsoUrl      string    `json:"idp_sso_url"`
+	IdpCertificate string    `json:"idp_certificate"`
+	Provider       string    `json:"provider"`
 }
