@@ -12,7 +12,7 @@ import (
 type OrgCompleteMetadata struct {
 	OrgID                 uuid.UUID              `json:"org_id"`
 	Name                  string                 `json:"org_name"`
-	UrlSafeOrgSlud        string                 `json:"url_safe_org_slug"`
+	UrlSafeOrgSlug        string                 `json:"url_safe_org_slug"`
 	CanSetupSaml          bool                   `json:"can_setup_saml"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
 	IsSamlInTestMode      bool                   `json:"is_saml_in_test_mode"`
