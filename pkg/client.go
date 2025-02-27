@@ -51,7 +51,7 @@ type ClientInterface interface {
 	CreateOrgV2(params models.CreateOrgV2Params) (*models.CreateOrgV2Response, error)
 	DeleteOrg(orgID uuid.UUID) (bool, error)
 	DisallowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
-	FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error)
+	FetchOrg(orgID uuid.UUID) (*models.OrgCompleteMetadata, error)
 	FetchOrgByQuery(params models.OrgQueryParams) (*models.OrgList, error)
 	FetchCustomRoleMappings() (*models.CustomRoleMappingList, error)
 	FetchPendingInvites(params models.FetchPendingInvitesParams) (*models.PendingInvitesPage, error)
@@ -851,7 +851,7 @@ func (o *Client) LogoutAllUserSessions(userID uuid.UUID) (bool, error) {
 // public methods for orgs
 
 // FetchOrg will fetch an org's data.
-func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error) {
+func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgCompleteMetadata, error) {
 	urlPostfix := fmt.Sprintf("org/%s", orgID)
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
@@ -863,9 +863,9 @@ func (o *Client) FetchOrg(orgID uuid.UUID) (*models.OrgMetadata, error) {
 		return nil, fmt.Errorf("Error on fetching org: %w", err)
 	}
 
-	org := &models.OrgMetadata{}
+	org := &models.OrgCompleteMetadata{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, org); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgMetadata: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgCompleteMetadata: %w", err)
 	}
 
 	return org, nil

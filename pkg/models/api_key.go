@@ -77,11 +77,11 @@ type APIKeyUpdateParams struct {
 }
 
 type ApiKeyRateLimitError struct {
-    WaitSeconds float64 `json:"wait_seconds"`
-	ErrorCode   string  `json:"error_code"`
-	UserFacingError string `json:"user_facing_error"`
+	WaitSeconds     float64 `json:"wait_seconds"`
+	ErrorCode       string  `json:"error_code"`
+	UserFacingError string  `json:"user_facing_error"`
 }
 
 func (e *ApiKeyRateLimitError) Error() string {
-    return e.UserFacingError
+	return e.UserFacingError
 }

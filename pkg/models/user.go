@@ -118,7 +118,7 @@ type UserQueryParams struct {
 	OrderBy         *string `json:"order_by,omitempty"`
 	EmailOrUsername *string `json:"email_or_username,omitempty"`
 	IncludeOrgs     *bool   `json:"include_orgs,omitempty"`
-	LegacyUserID	*string `json:"legacy_user_id,omitempty"`
+	LegacyUserID    *string `json:"legacy_user_id,omitempty"`
 }
 
 // UpdateUserPasswordParam is the information needed to update a user's password.

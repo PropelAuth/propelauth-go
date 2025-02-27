@@ -27,7 +27,7 @@ func RandomOrg(userRole string, multi_role bool) models.OrgMemberInfoFromToken {
 			OrgID:                             RandomOrgID(),
 			OrgName:                           "orgname",
 			OrgMetadata:                       map[string]interface{}{},
-			OrgRoleStructure: 				   models.MultiRole,
+			OrgRoleStructure:                  models.MultiRole,
 			UserAssignedRole:                  userRole,
 			UserInheritedRolesPlusCurrentRole: []string{userRole},
 		}
