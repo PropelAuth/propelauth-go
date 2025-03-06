@@ -70,6 +70,7 @@ type CreateUserParams struct {
 	AskUserToUpdatePasswordOnLogin *bool                   `json:"ask_user_to_update_password_on_login,omitempty"`
 	Metadata                       *map[string]interface{} `json:"metadata,omitempty"`
 	Properties                     *map[string]interface{} `json:"properties,omitempty"`
+	IgnoreDomainRestrictions       *bool                   `json:"ignore_domain_restrictions,omitempty"`
 }
 
 // MigrateUserParams is the information needed to migrate a user from another system. Email is required, but all other
