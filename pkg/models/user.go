@@ -108,6 +108,7 @@ type UpdateUserMetadata struct {
 	CanCreateOrgs          *bool                   `json:"can_create_orgs,omitempty"`
 	Metadata               *map[string]interface{} `json:"metadata,omitempty"`
 	Properties             *map[string]interface{} `json:"properties,omitempty"`
+	LegacyUserID           *string                 `json:"legacy_user_id,omitempty"`
 }
 
 // UserQueryParams is the information needed to query a pageable list of users. If left blank, PageSize defaults to 10

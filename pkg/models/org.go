@@ -79,6 +79,7 @@ type UpdateOrg struct {
 	Domain           *string                 `json:"domain,omitempty"`
 	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
 	LegacyOrgId      *string                 `json:"legacy_org_id,omitempty"`
+	ExtraDomains     *[]string               `json:"extra_domains,omitempty"`
 }
 
 // OrgRoleMappingSubscription is the information needed to subscribe an organization to a
