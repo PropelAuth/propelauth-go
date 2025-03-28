@@ -91,6 +91,12 @@ type MigrateUserParams struct {
 	Properties                     *map[string]interface{} `json:"properties,omitempty"`
 }
 
+// MigrateUserPasswordParams is the information needed to migrate a user's password from another system.
+type MigrateUserPasswordParams struct {
+	UserID       uuid.UUID `json:"user_id"`
+	PasswordHash string    `json:"password_hash"`
+}
+
 // UpdateEmailParams is the information needed to update a user's email address.
 type UpdateEmail struct {
 	Email                    string `json:"new_email"`
