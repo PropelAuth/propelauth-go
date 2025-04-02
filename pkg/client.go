@@ -35,6 +35,7 @@ type ClientInterface interface {
 	FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error)
 	FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error)
 	MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error)
+	MigrateUserPassword(params models.MigrateUserPasswordParams) (bool, error)
 	UpdateUserEmail(userID uuid.UUID, params models.UpdateEmail) (bool, error)
 	UpdateUserMetadata(userID uuid.UUID, params models.UpdateUserMetadata) (bool, error)
 	UpdateUserPassword(userID uuid.UUID, params models.UpdateUserPasswordParam) (bool, error)
@@ -578,6 +579,27 @@ func (o *Client) MigrateUserFromExternalSource(params models.MigrateUserParams) 
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on migrating user: %w", err)
+	}
+
+	return true, nil
+}
+
+// MigrateUserPassword will migrate a user's password from another system.
+func (o *Client) MigrateUserPassword(params models.MigrateUserPasswordParams) (bool, error) {
+	urlPostfix := "migrate_user/password"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on migrating user password: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on migrating user password: %w", err)
 	}
 
 	return true, nil
