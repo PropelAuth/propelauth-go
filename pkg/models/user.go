@@ -41,6 +41,7 @@ type OrgInfo struct {
 	OrgRoleStructure OrgRoleStructure `json:"org_role_structure"`
 	UserRole         string           `json:"user_role"`
 	AdditionalRoles  []string         `json:"additional_roles"`
+	UserPermissions  []string         `json:"user_permissions"`
 }
 
 // UserList is a paged list of users. The actual fetched users are in the Users field, and the

@@ -11,7 +11,7 @@ import (
 // OrgMetadata has the information about the organziation.
 type OrgCompleteMetadata struct {
 	OrgID                 uuid.UUID              `json:"org_id"`
-	Name                  string                 `json:"org_name"`
+	Name                  string                 `json:"name"`
 	UrlSafeOrgSlug        string                 `json:"url_safe_org_slug"`
 	CanSetupSaml          bool                   `json:"can_setup_saml"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
