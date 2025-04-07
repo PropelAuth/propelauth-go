@@ -32,7 +32,11 @@ func (o *ValidationHelper) ValidateAccessTokenAndGetUser(accessToken string, tok
 		}
 
 		return &tokenVerificationMetadata.VerifierKey, nil
-	})
+	},
+		jwt.WithIssuer(tokenVerificationMetadata.Issuer),
+		jwt.WithValidMethods([]string{"RS256"}),
+		jwt.WithExpirationRequired(),
+	)
 
 	// friendly error messages
 	if errors.Is(err, jwt.ErrTokenMalformed) {
