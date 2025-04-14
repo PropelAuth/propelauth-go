@@ -29,7 +29,7 @@ type OrgCompleteMetadata struct {
 // OrgMetadata has the information about the organziation.
 type OrgMetadata struct {
 	OrgID                 uuid.UUID              `json:"org_id"`
-	Name                  string                 `json:"org_name"`
+	Name                  string                 `json:"name"`
 	MaxUsers              *int                   `json:"max_users"`
 	Metadata              map[string]interface{} `json:"metadata"`
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
