@@ -45,6 +45,8 @@ type ClientInterface interface {
 	DisableUser2fa(userID uuid.UUID) (bool, error)
 	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
 	LogoutAllUserSessions(userID uuid.UUID) (bool, error)
+	VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error)
+	VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequest) (*models.StepUpMfaVerifyTotpResponse, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -1506,6 +1508,120 @@ func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, e
 	}
 
 	return apiKeyValidate, nil
+}
+
+// VerifyStepUpGrant verifies a step-up MFA grant
+func (o *Client) VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error) {
+	urlPostfix := "mfa/step-up/verify-grant"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	// Make the request
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on verifying step-up grant: %w", err)
+	}
+
+	// Check for common HTTP errors first
+	if queryResponse.StatusCode == 401 {
+		return nil, fmt.Errorf("integrationAPIKey is incorrect")
+	} else if queryResponse.StatusCode == 429 {
+		return nil, fmt.Errorf("Rate limit exceeded: %s", queryResponse.BodyText)
+	}
+
+	// Success case
+	if queryResponse.StatusCode < 400 {
+		return &models.StepUpMfaVerifyGrantResponse{
+			Success: true,
+		}, nil
+	}
+
+	// Handle other error cases that require JSON parsing
+	var errorResponse map[string]interface{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, &errorResponse); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling error response: %w", err)
+	}
+
+	// Check specific error conditions
+	if errorResponse["error_code"] == "invalid_request_fields" {
+		fieldToErrors, ok := errorResponse["field_to_errors"].(map[string]interface{})
+		if ok && fieldToErrors["grant"] == "grant_not_found" {
+			return &models.StepUpMfaVerifyGrantResponse{
+				Success: false,
+			}, nil
+		}
+		return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+	} else if errorResponse["error_code"] == "feature_gated" {
+		return nil, fmt.Errorf("This feature isn't available on your current pricing plan")
+	}
+
+	return nil, fmt.Errorf("Unknown error when verifying step up grant: %s", queryResponse.BodyText)
+}
+
+// VerifyStepUpTotpChallenge verifies a TOTP challenge for step-up MFA
+func (o *Client) VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequest) (*models.StepUpMfaVerifyTotpResponse, error) {
+	urlPostfix := "mfa/step-up/verify-totp"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	// Make the request
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on verifying TOTP challenge: %w", err)
+	}
+
+	// Check for HTTP errors first
+	if queryResponse.StatusCode == 401 {
+		return nil, fmt.Errorf("integrationAPIKey is incorrect")
+	} else if queryResponse.StatusCode == 429 {
+		return nil, fmt.Errorf("Rate limit exceeded: %s", queryResponse.BodyText)
+	}
+
+	// Success case
+	if queryResponse.StatusCode < 400 {
+		var responseData map[string]interface{}
+		if err := json.Unmarshal(queryResponse.BodyBytes, &responseData); err != nil {
+			return nil, fmt.Errorf("Error on unmarshalling response: %w", err)
+		}
+
+		stepUpGrant, ok := responseData["step_up_grant"].(string)
+		if !ok {
+			return nil, fmt.Errorf("Missing or invalid step_up_grant in response")
+		}
+
+		return &models.StepUpMfaVerifyTotpResponse{
+			StepUpGrant: stepUpGrant,
+		}, nil
+	}
+
+	// Handle other error cases that require JSON parsing
+	var errorResponse map[string]interface{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, &errorResponse); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling error response: %w", err)
+	}
+
+	// Check specific error conditions
+	errorCode, _ := errorResponse["error_code"].(string)
+	switch errorCode {
+	case "user_not_found":
+		return nil, fmt.Errorf("User not found")
+	case "mfa_not_enabled":
+		return nil, fmt.Errorf("MFA not enabled for this user")
+	case "incorrect_mfa_code":
+		return nil, fmt.Errorf("Incorrect MFA code")
+	case "invalid_request_fields":
+		return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+	case "feature_gated":
+		return nil, fmt.Errorf("This feature isn't available on your current pricing plan")
+	}
+
+	return nil, fmt.Errorf("Unknown error when verifying TOTP challenge: %s", queryResponse.BodyText)
 }
 
 // public methods for misc functionality
