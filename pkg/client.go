@@ -1533,7 +1533,7 @@ func (o *Client) VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*mod
 	}
 
 	// Success case
-	if queryResponse.StatusCode < 400 {
+	if queryResponse.StatusCode == 200 {
 		return &models.StepUpMfaVerifyGrantResponse{
 			Success: true,
 		}, nil
@@ -1584,7 +1584,7 @@ func (o *Client) VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequ
 	}
 
 	// Success case
-	if queryResponse.StatusCode < 400 {
+	if queryResponse.StatusCode == 200 {
 		var responseData map[string]interface{}
 		if err := json.Unmarshal(queryResponse.BodyBytes, &responseData); err != nil {
 			return nil, fmt.Errorf("Error on unmarshalling response: %w", err)
