@@ -45,6 +45,13 @@ type InviteUserToOrg struct {
 	AdditionalRoles []string  `json:"additional_roles,omitempty"`
 }
 
+type InviteUserToOrgByUserID struct {
+	UserID          uuid.UUID `json:"user_id"`
+	OrgID           uuid.UUID `json:"org_id"`
+	Role            string    `json:"role"`
+	AdditionalRoles []string  `json:"additional_roles,omitempty"`
+}
+
 // ChangeUserRoleInOrg is the information needed to change a user's role in an organization. Role is
 // just a string, but it has to match up to one of your defined roles, by default these are Owner,
 // Admin, or Member, but they can be changed via your dashboard. If you've configured multiple roles per user in your project,

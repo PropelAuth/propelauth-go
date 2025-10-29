@@ -45,8 +45,15 @@ type ClientInterface interface {
 	DisableUser2fa(userID uuid.UUID) (bool, error)
 	ResendEmailConfirmation(userID uuid.UUID) (bool, error)
 	LogoutAllUserSessions(userID uuid.UUID) (bool, error)
+	FetchUserSignupQueryParameters(UserID uuid.UUID) (*models.UserSignupQueryParamsResponse, error)
+	FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeByIDResponse, error)
+
+	// Step Up MFA
 	VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error)
 	VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequest) (*models.StepUpMfaVerifyTotpResponse, error)
+	FetchUserMFAMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error)
+	SendSmsMfaCode(params models.SendSmsMfaCodeRequest) (*models.SendSmsMfaCodeResponse, error)
+	VerifySmsChallenge(params models.VerifySmsChallengeRequest) (*models.VerifySmsChallengeResponse, error)
 
 	// org endpoints
 	AllowOrgToSetupSamlConnection(orgID uuid.UUID) (bool, error)
@@ -72,6 +79,7 @@ type ClientInterface interface {
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
 	RemoveUserFromOrg(params models.RemoveUserFromOrg) (bool, error)
 	InviteUserToOrg(params models.InviteUserToOrg) (bool, error)
+	InviteUserToOrgByUserID(params models.InviteUserToOrgByUserID) (bool, error)
 	FetchUsersInOrg(orgID uuid.UUID, params models.UserInOrgQueryParams) (*models.UserList, error)
 
 	// api key endpoints
@@ -84,6 +92,9 @@ type ClientInterface interface {
 	ValidatePersonalAPIKey(apiKeyToken string) (*models.PersonalAPIKeyValidation, error)
 	ValidateOrgAPIKey(apiKeyToken string) (*models.OrgAPIKeyValidation, error)
 	ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
+	FetchAPIKeyUsage(params models.FetchAPIKeyUsageParams) (*models.APIKeyUsage, error)
+	ImportAPIKey(params models.APIKeyImportParams) (*models.APIKeyImportedNew, error)
+	ValidateImportedAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
 
 	// a method to validate the JWT
 	GetUser(authHeader string) (*models.UserFromToken, error)
@@ -828,6 +839,26 @@ func (o *Client) InviteUserToOrg(params models.InviteUserToOrg) (bool, error) {
 	return true, nil
 }
 
+func (o *Client) InviteUserToOrgByUserID(params models.InviteUserToOrgByUserID) (bool, error) {
+	urlPostfix := "invite_user_by_id"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on inviting user to org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on inviting user to org: %w", err)
+	}
+
+	return true, nil
+}
+
 // ResendEmailConfirmation will resend the email confirmation email to a user.
 func (o *Client) ResendEmailConfirmation(userID uuid.UUID) (bool, error) {
 	urlPostfix := "resend_email_confirmation"
@@ -1310,6 +1341,31 @@ func (o *Client) CreateAPIKey(params models.APIKeyCreateParams) (*models.APIKeyN
 	return apiKey, nil
 }
 
+func (o *Client) ImportAPIKey(params models.APIKeyImportParams) (*models.APIKeyImportedNew, error) {
+	urlPostfix := "end_user_api_keys/import"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on importing an API key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on importing an API key: %w", err)
+	}
+
+	apiKey := &models.APIKeyImportedNew{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKey); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyImportedNew: %w", err)
+	}
+
+	return apiKey, nil
+}
+
 func (o *Client) UpdateAPIKey(apiKeyID string, params models.APIKeyUpdateParams) (bool, error) {
 	urlPostfix := fmt.Sprintf("end_user_api_keys/%s", apiKeyID)
 
@@ -1510,6 +1566,92 @@ func (o *Client) ValidateAPIKey(apiKeyToken string) (*models.APIKeyValidation, e
 	return apiKeyValidate, nil
 }
 
+func (o *Client) ValidateImportedAPIKey(apiKeyToken string) (*models.APIKeyValidation, error) {
+	urlPostfix := "end_user_api_keys/validate_imported"
+
+	// assemble the parameters
+
+	type ValidteAPIKey struct {
+		APIKeyToken string `json:"api_key_token"`
+	}
+
+	bodyParams := ValidteAPIKey{
+		APIKeyToken: apiKeyToken,
+	}
+
+	bodyJSON, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	// make the request
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on validating an API Key: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		if queryResponse.StatusCode == 429 {
+			rateLimitError := &models.ApiKeyRateLimitError{}
+			errParsingJsonToEndUserRateLimit := json.Unmarshal(queryResponse.BodyBytes, rateLimitError)
+			if errParsingJsonToEndUserRateLimit != nil {
+				// this is the case where the caller has hit a PropelAuth rate limit
+				return nil, err
+			} else {
+				// this is the case where the end user's api key has hit a rate limit
+				// configured in the PropelAuth dashboard
+				return nil, rateLimitError
+			}
+		}
+		return nil, fmt.Errorf("Error on validating an Imported API Key: %w", err)
+	}
+
+	apiKeyValidate := &models.APIKeyValidation{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeyValidate); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyValidation: %w", err)
+	}
+
+	return apiKeyValidate, nil
+}
+
+func (o *Client) FetchAPIKeyUsage(params models.FetchAPIKeyUsageParams) (*models.APIKeyUsage, error) {
+	urlPostfix := "end_user_api_keys/usage"
+
+	// assemble the parameters
+
+	queryParams := url.Values{}
+
+	queryParams.Add("date", params.Date)
+	if params.UserID != nil {
+		queryParams.Add("user_id", params.UserID.String())
+	}
+	if params.OrgID != nil {
+		queryParams.Add("org_id", params.OrgID.String())
+	}
+	if params.APIKeyID != nil {
+		queryParams.Add("api_key_id", *params.APIKeyID)
+	}
+
+	// make the request
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on querying API key usage: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on querying API key usage: %w", err)
+	}
+
+	apiKeyUsage := &models.APIKeyUsage{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeyUsage); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to APIKeyUsage: %w", err)
+	}
+
+	return apiKeyUsage, nil
+}
+
 // VerifyStepUpGrant verifies a step-up MFA grant
 func (o *Client) VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error) {
 	urlPostfix := "mfa/step-up/verify-grant"
@@ -1624,6 +1766,111 @@ func (o *Client) VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequ
 	return nil, fmt.Errorf("Unknown error when verifying TOTP challenge: %s", queryResponse.BodyText)
 }
 
+func (o *Client) SendSmsMfaCode(params models.SendSmsMfaCodeRequest) (*models.SendSmsMfaCodeResponse, error) {
+	urlPostfix := "mfa/step-up/phone/send"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	// Make the request
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on sending sms mfa code: %w", err)
+	}
+
+	// Check for HTTP errors first
+	if queryResponse.StatusCode == 401 {
+		return nil, fmt.Errorf("integrationAPIKey is incorrect")
+	} else if queryResponse.StatusCode == 429 {
+		return nil, fmt.Errorf("Rate limit exceeded: %s", queryResponse.BodyText)
+	}
+
+	// Success case
+	if queryResponse.StatusCode == 200 {
+		var responseData map[string]interface{}
+		if err := json.Unmarshal(queryResponse.BodyBytes, &responseData); err != nil {
+			return nil, fmt.Errorf("Error on unmarshalling response: %w", err)
+		}
+
+		challengeID, ok := responseData["challenge_id"].(string)
+		if !ok {
+			return nil, fmt.Errorf("Missing or invalid challenge_id in response")
+		}
+
+		return &models.SendSmsMfaCodeResponse{
+			ChallengeID: challengeID,
+		}, nil
+	}
+
+	// Handle other error cases that require JSON parsing
+	var errorResponse map[string]interface{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, &errorResponse); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling error response: %w", err)
+	}
+
+	// Check specific error conditions
+	errorCode, _ := errorResponse["error_code"].(string)
+	switch errorCode {
+	case "user_not_found":
+		return nil, fmt.Errorf("User not found")
+	case "mfa_not_enabled":
+		return nil, fmt.Errorf("MFA not enabled for this user")
+	case "invalid_request_fields":
+		return nil, fmt.Errorf("Bad request: %s", queryResponse.BodyText)
+	case "feature_gated":
+		return nil, fmt.Errorf("This feature isn't available on your current pricing plan")
+	}
+
+	return nil, fmt.Errorf("Error on sending sms mfa code: %s", queryResponse.BodyText)
+}
+
+func (o *Client) VerifySmsChallenge(params models.VerifySmsChallengeRequest) (*models.VerifySmsChallengeResponse, error) {
+	urlPostfix := "mfa/step-up/phone/verify"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error on verifying sms challenge: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on verifying sms challenge: %w", err)
+	}
+
+	stepUpGrant := &models.VerifySmsChallengeResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, stepUpGrant); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to VerifySmsChallengeResponse: %w", err)
+	}
+
+	return stepUpGrant, nil
+}
+
+func (o *Client) FetchUserMFAMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error) {
+	urlPostfix := fmt.Sprintf("user/%s/mfa", UserID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching user mfa methods: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching user mfa methods: %w", err)
+	}
+
+	mfaMethods := &models.FetchUserMfaMethodsResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, mfaMethods); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to FetchUserMfaMethodsResponse: %w", err)
+	}
+
+	return mfaMethods, nil
+}
+
 // public methods for misc functionality
 
 // CreateAccessToken creates an access token.
@@ -1706,6 +1953,46 @@ func (o *Client) CreateMagicLink(params models.CreateMagicLinkParams) (*models.C
 	}
 
 	return magicLink, nil
+}
+
+func (o *Client) FetchUserSignupQueryParameters(UserID uuid.UUID) (*models.UserSignupQueryParamsResponse, error) {
+	urlPostfix := fmt.Sprintf("user/%s/signup_query_parameters", UserID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching user signup query params: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching user signup query params: %w", err)
+	}
+
+	queryParams := &models.UserSignupQueryParamsResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, queryParams); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserSignupQueryParamsResponse: %w", err)
+	}
+
+	return queryParams, nil
+}
+
+func (o *Client) FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeByIDResponse, error) {
+	urlPostfix := fmt.Sprintf("employee/%s", employeeID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching employee by id: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching employee by id: %w", err)
+	}
+
+	employee := &models.FetchEmployeeByIDResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, employee); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
+	}
+
+	return employee, nil
 }
 
 // public methods around authorization

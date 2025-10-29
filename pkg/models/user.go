@@ -54,6 +54,10 @@ type UserList struct {
 	Users          []UserMetadata `json:"users"`
 }
 
+type UserSignupQueryParamsResponse struct {
+	UserSignupQueryParameters map[string]interface{} `json:"user_signup_query_parameters"`
+}
+
 // post types
 
 // CreateUserParams is the information needed to create a user. Email is required, but all other fields are optional.

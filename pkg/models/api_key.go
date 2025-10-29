@@ -54,6 +54,14 @@ type APIKeyNew struct {
 	APIKeyToken string `json:"api_key_token"`
 }
 
+type APIKeyImportedNew struct {
+	APIKeyID string `json:"api_key_id"`
+}
+
+type APIKeyUsage struct {
+	Count int `json:"count"`
+}
+
 // post types
 
 type APIKeysQueryParams struct {
@@ -72,6 +80,22 @@ type APIKeyCreateParams struct {
 }
 
 type APIKeyUpdateParams struct {
+	ExpiresAtSeconds *int                    `json:"expires_at_seconds,omitempty"`
+	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
+	SetToNeverExpire *bool                   `json:"set_to_never_expire,omitempty"`
+}
+
+type FetchAPIKeyUsageParams struct {
+	Date     string     `json:"date"`
+	OrgID    *uuid.UUID `json:"org_id,omitempty"`
+	UserID   *uuid.UUID `json:"user_id,omitempty"`
+	APIKeyID *string    `json:"api_key_id,omitempty"`
+}
+
+type APIKeyImportParams struct {
+	ImportedAPIKey   string                  `json:"imported_api_key"`
+	OrgID            *uuid.UUID              `json:"org_id,omitempty"`
+	UserID           *uuid.UUID              `json:"user_id,omitempty"`
 	ExpiresAtSeconds *int                    `json:"expires_at_seconds,omitempty"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
 }
