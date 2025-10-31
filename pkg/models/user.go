@@ -24,7 +24,7 @@ type UserMetadata struct {
 	PictureURL     *string                 `json:"picture_url"`
 	Locked         bool                    `json:"locked"`
 	Enabled        bool                    `json:"enabled"`
-	MFAEnabled     bool                    `json:"mfa_enabled"`
+	MfaEnabled     bool                    `json:"mfa_enabled"`
 	CanCreateOrgs  bool                    `json:"can_create_org"`
 	CreatedAt      int64                   `json:"created_at"`
 	LastActiveAt   int64                   `json:"last_active_at"`
@@ -52,6 +52,10 @@ type UserList struct {
 	PageSize       int            `json:"page_size"`
 	HasMoreResults bool           `json:"has_more_results"`
 	Users          []UserMetadata `json:"users"`
+}
+
+type UserSignupQueryParamsResponse struct {
+	UserSignupQueryParameters map[string]interface{} `json:"user_signup_query_parameters"`
 }
 
 // post types
