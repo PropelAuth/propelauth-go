@@ -51,7 +51,7 @@ type ClientInterface interface {
 	// Step Up MFA
 	VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error)
 	VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequest) (*models.StepUpMfaVerifyTotpResponse, error)
-	FetchUserMFAMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error)
+	FetchUserMfaMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error)
 	SendSmsMfaCode(params models.SendSmsMfaCodeRequest) (*models.SendSmsMfaCodeResponse, error)
 	VerifySmsChallenge(params models.VerifySmsChallengeRequest) (*models.VerifySmsChallengeResponse, error)
 
@@ -1851,7 +1851,7 @@ func (o *Client) VerifySmsChallenge(params models.VerifySmsChallengeRequest) (*m
 	return stepUpGrant, nil
 }
 
-func (o *Client) FetchUserMFAMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error) {
+func (o *Client) FetchUseMfaMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error) {
 	urlPostfix := fmt.Sprintf("user/%s/mfa", UserID)
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
