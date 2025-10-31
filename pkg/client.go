@@ -1851,7 +1851,7 @@ func (o *Client) VerifySmsChallenge(params models.VerifySmsChallengeRequest) (*m
 	return stepUpGrant, nil
 }
 
-func (o *Client) FetchUseMfaMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error) {
+func (o *Client) FetchUserMfaMethods(UserID uuid.UUID) (*models.FetchUserMfaMethodsResponse, error) {
 	urlPostfix := fmt.Sprintf("user/%s/mfa", UserID)
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
