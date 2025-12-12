@@ -30,9 +30,9 @@ type ClientInterface interface {
 	FetchBatchUserMetadataByEmails(emails []string, includeOrgs bool) (map[string]models.UserMetadata, error)
 	FetchBatchUserMetadataByUserIds(userIds []uuid.UUID, includeOrgs bool) (map[uuid.UUID]models.UserMetadata, error)
 	FetchBatchUserMetadataByUsernames(usernames []string, includeOrgs bool) (map[string]models.UserMetadata, error)
-	FetchUserMetadataByEmail(email string, includeOrgs bool) (*models.UserMetadata, error)
+	FetchUserMetadataByEmail(email string, includeOrgs bool, isolatedOrgID *string) (*models.UserMetadata, error)
 	FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (*models.UserMetadata, error)
-	FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error)
+	FetchUserMetadataByUsername(username string, includeOrgs bool, isolatedOrgID *string) (*models.UserMetadata, error)
 	FetchUsersByQuery(params models.UserQueryParams) (*models.UserList, error)
 	MigrateUserFromExternalSource(params models.MigrateUserParams) (bool, error)
 	MigrateUserPassword(params models.MigrateUserPasswordParams) (bool, error)
@@ -74,6 +74,7 @@ type ClientInterface interface {
 	SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error)
 	SamlGoLive(orgId uuid.UUID) (bool, error)
 	DeleteSamlConnection(orgId uuid.UUID) (bool, error)
+	MigrateOrgToIsolated(orgID uuid.UUID) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -226,12 +227,16 @@ func (o *Client) FetchUserMetadataByUserID(userID uuid.UUID, includeOrgs bool) (
 
 // FetchUserMetadataByEmail will fetch a single user by their email. If includeOrgs is true, we'll also
 // fetch the organizations data for each organization the user is in.
-func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*models.UserMetadata, error) {
+func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool, isolatedOrgID *string) (*models.UserMetadata, error) {
 	urlPostfix := "user/email"
 
 	queryParams := url.Values{
 		"email":        {email},
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
+	}
+
+	if isolatedOrgID != nil {
+		queryParams.Add("isolated_org_id", *isolatedOrgID)
 	}
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
@@ -253,12 +258,16 @@ func (o *Client) FetchUserMetadataByEmail(email string, includeOrgs bool) (*mode
 
 // FetchUserMetadataByUsername will fetch a single user by their username. If includeOrgs is true, we'll also
 // fetch the organizations data for each organization the user is in.
-func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool) (*models.UserMetadata, error) {
+func (o *Client) FetchUserMetadataByUsername(username string, includeOrgs bool, isolatedOrgID *string) (*models.UserMetadata, error) {
 	urlPostfix := "user/username"
 
 	queryParams := url.Values{
 		"username":     {username},
 		"include_orgs": {strconv.FormatBool(includeOrgs)},
+	}
+
+	if isolatedOrgID != nil {
+		queryParams.Add("isolated_org_id", *isolatedOrgID)
 	}
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
@@ -448,6 +457,9 @@ func (o *Client) FetchUsersByQuery(params models.UserQueryParams) (*models.UserL
 	}
 	if params.IncludeOrgs != nil {
 		queryParams.Add("include_orgs", strconv.FormatBool(*params.IncludeOrgs))
+	}
+	if params.IsolatedOrgID != nil {
+		queryParams.Add("isolated_org_id", *params.IsolatedOrgID)
 	}
 
 	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
@@ -1289,6 +1301,35 @@ func (o *Client) DeleteSamlConnection(orgID uuid.UUID) (bool, error) {
 
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return false, fmt.Errorf("Error on deleting SAML connection for org: %w", err)
+	}
+
+	return true, nil
+}
+
+// MigrateOrgToIsolated will change a user's role in an org.
+func (o *Client) MigrateOrgToIsolated(orgID uuid.UUID) (bool, error) {
+	urlPostfix := "/isolate_org"
+
+	type MigrateOrgToIsolatedReq struct {
+		OrgID uuid.UUID `json:"org_id"`
+	}
+
+	bodyParams := MigrateOrgToIsolatedReq{
+		OrgID: orgID,
+	}
+
+	bodyJSON, err := json.Marshal(bodyParams)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on isolating org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on isolating org: %w", err)
 	}
 
 	return true, nil
