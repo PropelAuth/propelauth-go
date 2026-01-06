@@ -24,6 +24,7 @@ type OrgCompleteMetadata struct {
 	MaxUsers              *int                   `json:"max_users"`
 	LegacyOrgId           *string                `json:"legacy_org_id"`
 	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
+	Isolated              bool                   `json:"isolated"`
 }
 
 // OrgMetadata has the information about the organziation.
@@ -35,6 +36,7 @@ type OrgMetadata struct {
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
 	LegacyOrgId           *string                `json:"legacy_org_id"`
 	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
+	Isolated              bool                   `json:"isolated"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -80,6 +82,7 @@ type UpdateOrg struct {
 	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
 	LegacyOrgId      *string                 `json:"legacy_org_id,omitempty"`
 	ExtraDomains     *[]string               `json:"extra_domains,omitempty"`
+	SsoTrustLevel    *string                 `json:"sso_trust_level,omitempty"`
 }
 
 // OrgRoleMappingSubscription is the information needed to subscribe an organization to a

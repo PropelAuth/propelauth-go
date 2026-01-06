@@ -32,6 +32,7 @@ type UserMetadata struct {
 	OrgIDToOrgInfo *map[uuid.UUID]OrgInfo  `json:"org_id_to_org_info"`
 	Metadata       *map[string]interface{} `json:"metadata"`
 	Properties     *map[string]interface{} `json:"properties"`
+	LegacyOrgId    *string                 `json:"legacy_org_id"`
 }
 
 // OrgInfo is the information about an organization a user is in.
@@ -132,6 +133,7 @@ type UserQueryParams struct {
 	EmailOrUsername *string `json:"email_or_username,omitempty"`
 	IncludeOrgs     *bool   `json:"include_orgs,omitempty"`
 	LegacyUserID    *string `json:"legacy_user_id,omitempty"`
+	IsolatedOrgID   *string `json:"isolated_org_id,omitempty"`
 }
 
 // UpdateUserPasswordParam is the information needed to update a user's password.
