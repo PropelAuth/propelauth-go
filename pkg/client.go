@@ -1998,7 +1998,7 @@ func (o *Client) FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeB
 
 // methods to fetch user insights report data
 
-// FetchUserTopInviterReport will fetch the latest report on which users are the 
+// FetchUserTopInviterReport will fetch the latest report on which users are the
 // most frequent inviters. Default pagination is page size of 10 and page number 0.
 // Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
 // Default reportInterval is 30 days.
@@ -2039,7 +2039,7 @@ func (o *Client) FetchUserTopInviterReport(reportInterval *string, pagination *m
 	return report, nil
 }
 
-// FetchUserChampionReport will fetch the latest report on which users are champions. 
+// FetchUserChampionReport will fetch the latest report on which users are champions.
 // Default pagination is page size of 10 and page number of 0.
 // Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
 // Default reportInterval is 30 days.
@@ -2080,7 +2080,7 @@ func (o *Client) FetchUserChampionReport(reportInterval *string, pagination *mod
 	return report, nil
 }
 
-// FetchUserChurnReport will fetch the latest report on which users have churned. 
+// FetchUserChurnReport will fetch the latest report on which users have churned.
 // Default pagination is page size of 10 and page number of 0.
 // Valid reportInterval values include "7", "14", and "30" for 7/14/30 days respectively.
 // Default reportInterval is 7 days.
@@ -2202,7 +2202,7 @@ func (o *Client) FetchOrgGrowthReport(reportInterval *string, pagination *models
 	return report, nil
 }
 
-// FetchOrgAttritionReport will fetch the latest report on which orgs have the most attrition. 
+// FetchOrgAttritionReport will fetch the latest report on which orgs have the most attrition.
 // Default pagination is page size of 10 and page number of 0.
 // Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
 // Default reportInterval is 30 days.
@@ -2243,7 +2243,7 @@ func (o *Client) FetchOrgAttritionReport(reportInterval *string, pagination *mod
 	return report, nil
 }
 
-// FetchOrgChurnReport will fetch the latest report on which orgs have churned. 
+// FetchOrgChurnReport will fetch the latest report on which orgs have churned.
 // Default pagination is page size of 10 and page number of 0.
 // Valid reportInterval values include "7", "14", and "30" for 7/14/30 days respectively.
 // Default reportInterval is 7 days.
@@ -2284,7 +2284,7 @@ func (o *Client) FetchOrgChurnReport(reportInterval *string, pagination *models.
 	return report, nil
 }
 
-// FetchOrgReengagementReport will fetch the latest report on which orgs have reengaged. 
+// FetchOrgReengagementReport will fetch the latest report on which orgs have reengaged.
 // Default pagination is page size of 10 and page number of 0.
 // Valid reportInterval values include "Weekly" or "Monthly". Default reportInterval is Weekly.
 func (o *Client) FetchOrgReengagementReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error) {
@@ -2323,7 +2323,6 @@ func (o *Client) FetchOrgReengagementReport(reportInterval *string, pagination *
 
 	return report, nil
 }
-
 
 // public methods around authorization
 
