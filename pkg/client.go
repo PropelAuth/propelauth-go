@@ -3,6 +3,7 @@ package client
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 
 	"encoding/json"
@@ -1994,6 +1995,335 @@ func (o *Client) FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeB
 
 	return employee, nil
 }
+
+// methods to fetch user insights report data
+
+// FetchUserTopInviterReport will fetch the latest report on which users are the 
+// most frequent inviters. Default pagination is page size of 10 and page number 0.
+// Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
+// Default reportInterval is 30 days.
+func (o *Client) FetchUserTopInviterReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"30", "60", "90"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `30`, `60`, or `90` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "user_report/top_inviter", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.UserReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchUserChampionReport will fetch the latest report on which users are champions. 
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
+// Default reportInterval is 30 days.
+func (o *Client) FetchUserChampionReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"30", "60", "90"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `30`, `60`, or `90` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "user_report/champion", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.UserReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchUserChurnReport will fetch the latest report on which users have churned. 
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "7", "14", and "30" for 7/14/30 days respectively.
+// Default reportInterval is 7 days.
+func (o *Client) FetchUserChurnReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"7", "14", "30"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `7`, `14`, or `30` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "user_report/churn", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.UserReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchUserReengagementReport will fetch the latest report on which users have reengaged.
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "Weekly" or "Monthly". Default reportInterval is Weekly.
+func (o *Client) FetchUserReengagementReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"Weekly", "Monthly"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `Weekly` or `Monthly` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "user_report/reengagement", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.UserReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to UserReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchOrgGrowthReport will fetch the latest report on which orgs have grown most.
+// Default pagination is page size of 10 and page number 0.
+// Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
+// Default reportInterval is 30 days.
+func (o *Client) FetchOrgGrowthReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"30", "60", "90"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `30`, `60`, or `90` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "org_report/growth", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.OrgReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchOrgAttritionReport will fetch the latest report on which orgs have the most attrition. 
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "30", "60", and "90" for 30/60/90 days respectively.
+// Default reportInterval is 30 days.
+func (o *Client) FetchOrgAttritionReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"30", "60", "90"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `30`, `60`, or `90` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "org_report/attrition", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.OrgReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchOrgChurnReport will fetch the latest report on which orgs have churned. 
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "7", "14", and "30" for 7/14/30 days respectively.
+// Default reportInterval is 7 days.
+func (o *Client) FetchOrgChurnReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"7", "14", "30"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `7`, `14`, or `30` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "org_report/churn", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.OrgReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgReport: %w", err)
+	}
+
+	return report, nil
+}
+
+// FetchOrgReengagementReport will fetch the latest report on which orgs have reengaged. 
+// Default pagination is page size of 10 and page number of 0.
+// Valid reportInterval values include "Weekly" or "Monthly". Default reportInterval is Weekly.
+func (o *Client) FetchOrgReengagementReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error) {
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		if pagination.PageSize != nil {
+			queryParams.Add("page_size", strconv.Itoa(*pagination.PageSize))
+		}
+		if pagination.PageNumber != nil {
+			queryParams.Add("page_number", strconv.Itoa(*pagination.PageNumber))
+		}
+	}
+
+	if reportInterval != nil {
+		validReportIntervals := []string{"Weekly", "Monthly"}
+		if !slices.Contains(validReportIntervals, *reportInterval) {
+			return nil, fmt.Errorf("Only `Weekly` or `Monthly` are valid values for reportInterval")
+		}
+		queryParams.Add("report_interval", *reportInterval)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, "org_report/reengagement", queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching report: %w", err)
+	}
+
+	report := &models.OrgReport{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, report); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to OrgReport: %w", err)
+	}
+
+	return report, nil
+}
+
 
 // public methods around authorization
 
