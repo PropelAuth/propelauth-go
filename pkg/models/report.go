@@ -10,7 +10,7 @@ type ReportPagination struct {
 // org report types
 
 type OrgReportRecord struct {
-	RecordId        string         `json:"record_id"`
+	Id              string         `json:"id"`
 	ReportId        string         `json:"report_id"`
 	OrgId           uuid.UUID      `json:"org_id"`
 	Name            string         `json:"name"`
@@ -37,7 +37,7 @@ type UserOrgMembershipForReport struct {
 }
 
 type UserReportRecord struct {
-	RecordId        string                       `json:"record_id"`
+	Id              string                       `json:"id"`
 	ReportId        string                       `json:"report_id"`
 	UserId          uuid.UUID                    `json:"user_id"`
 	Email           string                       `json:"email"`
@@ -58,13 +58,3 @@ type UserReport struct {
 	HasMoreResults bool               `json:"has_more_results"`
 	ReportTime     int64              `json:"report_time"`
 }
-
-// report interval options
-
-const WEEKLY = "Weekly"
-const MONTHLY = "Monthly"
-const SEVEN_DAYS = "7"
-const FOURTEEN_DAYS = "14"
-const THIRTY_DAYS = "30"
-const SIXTY_DAYS = "60"
-const NINETY_DAYS = "90"
