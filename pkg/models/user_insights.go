@@ -58,3 +58,22 @@ type UserReport struct {
 	HasMoreResults bool               `json:"has_more_results"`
 	ReportTime     int64              `json:"report_time"`
 }
+
+// chart data types
+
+type ChartDataPoint struct {
+	Result           int64  `json:"result"`
+	Date             string `json:"date"`
+	CadenceCompleted bool   `json:"cadence_completed"`
+}
+
+type ChartData struct {
+	Metrics   []ChartDataPoint `json:"metrics"`
+	Cadence   string           `json:"cadence"`
+	ChartType string           `json:"chart_type"`
+}
+
+type ChartRange struct {
+	StartDate *string
+	EndDate   *string
+}

@@ -2324,6 +2324,58 @@ func (o *Client) FetchOrgReengagementReport(reportInterval *string, pagination *
 	return report, nil
 }
 
+// FetchChartMetricData will fetch the chart metric data for the specified cadence and interval.
+// Valid `cadence` values include "Daily", "Weekly", or "Monthly". Default cadence is Daily.
+// Default startDate is 30 days ago. Default endDate is today.
+func (o *Client) FetchChartMetricData(chartMetric string, cadence *string, chartRange *models.ChartRange) (*models.ChartData, error) {
+	validChartMetrics := []string{"signups", "orgs_created", "active_orgs", "active_users"}
+	if !slices.Contains(validChartMetrics, chartMetric) {
+		return nil, fmt.Errorf("Only `signups`, `orgs_created`, `active_orgs`, or `active_users` are valid values for chartMetric")
+	}
+	urlPostfix := fmt.Sprintf("chart_metrics/%s", chartMetric)
+
+	queryParams := url.Values{}
+
+	if chartRange != nil {
+		if chartRange.StartDate != nil {
+			if !o.validationHelper.IsValidIsoDate(*chartRange.StartDate) {
+				return nil, fmt.Errorf("startDate must be in the format YYYY-MM-DD")
+			}
+			queryParams.Add("start_date", *chartRange.StartDate)
+		}
+		if chartRange.EndDate != nil {
+			if !o.validationHelper.IsValidIsoDate(*chartRange.EndDate) {
+				return nil, fmt.Errorf("endDate must be in the format YYYY-MM-DD")
+			}
+			queryParams.Add("end_date", *chartRange.EndDate)
+		}
+	}
+
+	if cadence != nil {
+		validCadences := []string{"Daily", "Weekly", "Monthly"}
+		if !slices.Contains(validCadences, *cadence) {
+			return nil, fmt.Errorf("Only `Daily`, `Weekly`, or `Monthly` are valid values for cadence")
+		}
+		queryParams.Add("cadence", *cadence)
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching chart data: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching chart data: %w", err)
+	}
+
+	chartData := &models.ChartData{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, chartData); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to ChartData: %w", err)
+	}
+
+	return chartData, nil
+}
+
 // public methods around authorization
 
 // GetUser will get a user from a JWT token. From there you get orgs the user is in, and validate the user's
