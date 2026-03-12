@@ -2327,6 +2327,7 @@ func (o *Client) FetchOrgReengagementReport(reportInterval *string, pagination *
 // FetchChartMetricData will fetch the chart metric data for the specified cadence and interval.
 // Valid `cadence` values include "Daily", "Weekly", or "Monthly". Default cadence is Daily.
 // Default startDate is 30 days ago. Default endDate is today.
+// Valid `chartMetric` values include "signups", "orgs_created", "active_orgs", or "active_users".
 func (o *Client) FetchChartMetricData(chartMetric string, cadence *string, chartRange *models.ChartRange) (*models.ChartData, error) {
 	validChartMetrics := []string{"signups", "orgs_created", "active_orgs", "active_users"}
 	if !slices.Contains(validChartMetrics, chartMetric) {
