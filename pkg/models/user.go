@@ -139,3 +139,31 @@ type UpdateUserPasswordParam struct {
 	Password                       string `json:"password"`
 	AskUserToUpdatePasswordOnLogin *bool  `json:"ask_user_to_update_password_on_login,omitempty"`
 }
+
+type SocialLoginTokenProvider string
+
+const (
+    SocialLoginTokenProviderApple      SocialLoginTokenProvider = "apple"
+    SocialLoginTokenProviderGoogle     SocialLoginTokenProvider = "google"
+    SocialLoginTokenProviderGitHub     SocialLoginTokenProvider = "github"
+    SocialLoginTokenProviderMicrosoft  SocialLoginTokenProvider = "microsoft"
+    SocialLoginTokenProviderSlack      SocialLoginTokenProvider = "slack"
+    SocialLoginTokenProviderSalesforce SocialLoginTokenProvider = "salesforce"
+    SocialLoginTokenProviderLinkedIn   SocialLoginTokenProvider = "linkedin"
+    SocialLoginTokenProviderOutreach   SocialLoginTokenProvider = "outreach"
+    SocialLoginTokenProviderQuickbooks SocialLoginTokenProvider = "quickbooks"
+    SocialLoginTokenProviderXero       SocialLoginTokenProvider = "xero"
+    SocialLoginTokenProviderSalesloft  SocialLoginTokenProvider = "salesloft"
+    SocialLoginTokenProviderAtlassian  SocialLoginTokenProvider = "atlassian"
+    SocialLoginTokenProviderGitLab     SocialLoginTokenProvider = "gitlab"
+)
+
+type SocialLoginToken struct {
+    AccessToken       string                   `json:"access_token"`
+    RefreshToken      *string                  `json:"refresh_token,omitempty"`
+    TokenProvider     SocialLoginTokenProvider `json:"token_provider"`
+    TokenExpiration   *int64                   `json:"token_expiration,omitempty"`
+    AuthorizedScopes  []string                 `json:"authorized_scopes,omitempty"`
+}
+
+type SocialLoginTokensResponse map[SocialLoginTokenProvider]*SocialLoginToken

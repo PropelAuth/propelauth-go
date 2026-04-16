@@ -10,20 +10,23 @@ import (
 
 // OrgMetadata has the information about the organziation.
 type OrgCompleteMetadata struct {
-	OrgID                 uuid.UUID              `json:"org_id"`
-	Name                  string                 `json:"name"`
-	UrlSafeOrgSlug        string                 `json:"url_safe_org_slug"`
-	CanSetupSaml          bool                   `json:"can_setup_saml"`
-	IsSamlConfigured      bool                   `json:"is_saml_configured"`
-	IsSamlInTestMode      bool                   `json:"is_saml_in_test_mode"`
-	Domain                *string                `json:"domain"`
-	ExtraDomains          []string               `json:"extra_domains"`
-	DomainAutojoin        bool                   `json:"domain_autojoin"`
-	DomainRestrict        bool                   `json:"domain_restrict"`
-	Metadata              map[string]interface{} `json:"metadata"`
-	MaxUsers              *int                   `json:"max_users"`
-	LegacyOrgId           *string                `json:"legacy_org_id"`
-	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
+	OrgID                       uuid.UUID              `json:"org_id"`
+	Name                        string                 `json:"name"`
+	UrlSafeOrgSlug              string                 `json:"url_safe_org_slug"`
+	CanSetupSaml                bool                   `json:"can_setup_saml"`
+	IsSamlConfigured            bool                   `json:"is_saml_configured"`
+	IsSamlInTestMode            bool                   `json:"is_saml_in_test_mode"`
+	Domain                      *string                `json:"domain"`
+	ExtraDomains                []string               `json:"extra_domains"`
+	DomainAutojoin              bool                   `json:"domain_autojoin"`
+	DomainRestrict              bool                   `json:"domain_restrict"`
+	Metadata                    map[string]interface{} `json:"metadata"`
+	MaxUsers                    *int                   `json:"max_users"`
+	LegacyOrgId                 *string                `json:"legacy_org_id"`
+	CustomRoleMappingName       string                 `json:"custom_role_mapping_name"`
+	PasswordRotationEnabled     *bool                  `json:"password_rotation_enabled"`
+	PasswordRotationHistorySize *int                   `json:"password_rotation_history_size"`
+	PasswordRotationPeriod      *int                   `json:"password_rotation_period"`
 }
 
 // OrgMetadata has the information about the organziation.
@@ -35,6 +38,7 @@ type OrgMetadata struct {
 	IsSamlConfigured      bool                   `json:"is_saml_configured"`
 	LegacyOrgId           *string                `json:"legacy_org_id"`
 	CustomRoleMappingName string                 `json:"custom_role_mapping_name"`
+	CreatedAt             *int                   `json:"created_at"`
 }
 
 // OrgList is a paged list of organizations. The actual fetched organizations are in the Orgs field, and the
@@ -70,16 +74,19 @@ type CreateOrg struct {
 // the fields you set. Note that AutojoinByDomain and RestrictToDomain require a validated domain, which can
 // only be set in your dashboard.
 type UpdateOrg struct {
-	Name             *string                 `json:"name"`
-	CanSetupSaml     *bool                   `json:"can_setup_saml"`
-	AutojoinByDomain *bool                   `json:"autojoin_by_domain"`
-	RestrictToDomain *bool                   `json:"restrict_to_domain"`
-	MaxUsers         *int                    `json:"max_users"`
-	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
-	Domain           *string                 `json:"domain,omitempty"`
-	Require2FABy     *string                 `json:"require_2fa_by,omitempty"`
-	LegacyOrgId      *string                 `json:"legacy_org_id,omitempty"`
-	ExtraDomains     *[]string               `json:"extra_domains,omitempty"`
+	Name                        *string                 `json:"name"`
+	CanSetupSaml                *bool                   `json:"can_setup_saml"`
+	AutojoinByDomain            *bool                   `json:"autojoin_by_domain"`
+	RestrictToDomain            *bool                   `json:"restrict_to_domain"`
+	MaxUsers                    *int                    `json:"max_users"`
+	Metadata                    *map[string]interface{} `json:"metadata,omitempty"`
+	Domain                      *string                 `json:"domain,omitempty"`
+	Require2FABy                *string                 `json:"require_2fa_by,omitempty"`
+	LegacyOrgId                 *string                 `json:"legacy_org_id,omitempty"`
+	ExtraDomains                *[]string               `json:"extra_domains,omitempty"`
+	PasswordRotationEnabled     *bool                   `json:"password_rotation_enabled,omitempty"`
+	PasswordRotationHistorySize *int                    `json:"password_rotation_history_size,omitempty"`
+	PasswordRotationPeriod      *int                    `json:"password_rotation_period,omitempty"`
 }
 
 // OrgRoleMappingSubscription is the information needed to subscribe an organization to a
@@ -206,3 +213,44 @@ type SamlIdpMetadata struct {
 	IdpCertificate string    `json:"idp_certificate"`
 	Provider       string    `json:"provider"`
 }
+
+type OidcIdpType string
+
+const (
+	OidcIdpTypeGeneric OidcIdpType = "Generic"
+	OidcIdpTypeOkta    OidcIdpType = "Okta"
+	OidcIdpTypeAzure   OidcIdpType = "Azure"
+)
+
+type SetOidcIdpMetadataRequest interface {
+	isSetOidcIdpMetadataRequest()
+}
+
+type SetOidcIdpMetadataRequestBase struct {
+	OrgID        uuid.UUID   `json:"org_id"`
+	ClientID     string      `json:"client_id"`
+	ClientSecret string      `json:"client_secret"`
+	UsesPkce     bool        `json:"uses_pkce"`
+	IdpType      OidcIdpType `json:"idp_type"`
+}
+
+type SetGenericOidcMetadataRequest struct {
+	SetOidcIdpMetadataRequestBase
+	AuthURL     string `json:"auth_url"`
+	TokenURL    string `json:"token_url"`
+	UserinfoURL string `json:"userinfo_url"`
+}
+
+type SetOktaOidcMetadataRequest struct {
+	SetOidcIdpMetadataRequestBase
+	OktaSsoDomain string `json:"okta_sso_domain"`
+}
+
+type SetAzureOidcMetadataRequest struct {
+	SetOidcIdpMetadataRequestBase
+	EntraTenantID string `json:"entra_tenant_id"`
+}
+
+func (SetGenericOidcMetadataRequest) isSetOidcIdpMetadataRequest() {}
+func (SetOktaOidcMetadataRequest) isSetOidcIdpMetadataRequest()    {}
+func (SetAzureOidcMetadataRequest) isSetOidcIdpMetadataRequest()   {}

@@ -47,7 +47,9 @@ type ClientInterface interface {
 	LogoutAllUserSessions(userID uuid.UUID) (bool, error)
 	FetchUserSignupQueryParameters(UserID uuid.UUID) (*models.UserSignupQueryParamsResponse, error)
 	FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeByIDResponse, error)
-
+	FetchUserOAuthTokens(userID uuid.UUID) (*models.SocialLoginTokensResponse, error)
+	FetchFreshTokenFromProvider(userID uuid.UUID, provider models.SocialLoginTokenProvider) (*models.SocialLoginToken, error)
+	
 	// Step Up MFA
 	VerifyStepUpGrant(params models.VerifyStepUpGrantRequest) (*models.StepUpMfaVerifyGrantResponse, error)
 	VerifyStepUpTotpChallenge(params models.VerifyTotpChallengeRequest) (*models.StepUpMfaVerifyTotpResponse, error)
@@ -74,6 +76,7 @@ type ClientInterface interface {
 	SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error)
 	SamlGoLive(orgId uuid.UUID) (bool, error)
 	DeleteSamlConnection(orgId uuid.UUID) (bool, error)
+	SetOidcIdpMetadata(params models.SetOidcIdpMetadataRequest) (bool, error)
 
 	// user in org endpoints
 	AddUserToOrg(params models.AddUserToOrg) (bool, error)
@@ -95,6 +98,10 @@ type ClientInterface interface {
 	FetchAPIKeyUsage(params models.FetchAPIKeyUsageParams) (*models.APIKeyUsage, error)
 	ImportAPIKey(params models.APIKeyImportParams) (*models.APIKeyImportedNew, error)
 	ValidateImportedAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
+	
+	// scim endpoints
+	FetchOrgScimGroups(params models.FetchOrgScimGroupsRequest) (*models.ScimGroupResultPage, error)
+	FetchScimGroup(params models.FetchScimGroupRequest) (*models.ScimGroup, error)
 
 	// a method to validate the JWT
 	GetUser(authHeader string) (*models.UserFromToken, error)
@@ -1262,6 +1269,27 @@ func (o *Client) SetSamlIdpMetadata(params models.SamlIdpMetadata) (bool, error)
 	return true, nil
 }
 
+// SetOidcIdpMetadata will set the Identity Provider metadata needed to configure a OIDC connection for an org.
+func (o *Client) SetOidcIdpMetadata(params models.SetOidcIdpMetadataRequest) (bool, error) {
+	urlPostfix := "oidc_idp_metadata"
+
+	bodyJSON, err := json.Marshal(params)
+	if err != nil {
+		return false, fmt.Errorf("Error on marshalling body params: %w", err)
+	}
+
+	queryResponse, err := o.queryHelper.Post(o.integrationAPIKey, urlPostfix, nil, bodyJSON)
+	if err != nil {
+		return false, fmt.Errorf("Error on setting OIDC IDP Metadata for org: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return false, fmt.Errorf("Error on setting OIDC IDP Metadata for org: %w", err)
+	}
+
+	return true, nil
+}
+
 // SamlGoLive will set the SAML connection for an org to be live.
 func (o *Client) SamlGoLive(orgID uuid.UUID) (bool, error) {
 	urlPostfix := fmt.Sprintf("saml_idp_metadata/go_live/%s", orgID)
@@ -1434,8 +1462,6 @@ func (o *Client) FetchCurrentAPIKeys(params models.APIKeysQueryParams) (*models.
 	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
 		return nil, fmt.Errorf("Error on querying API keys: %w", err)
 	}
-
-	fmt.Println(string(queryResponse.BodyText))
 
 	apiKeys := &models.APIKeyResultPage{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, apiKeys); err != nil {
@@ -1989,10 +2015,102 @@ func (o *Client) FetchEmployeeByID(employeeID uuid.UUID) (*models.FetchEmployeeB
 
 	employee := &models.FetchEmployeeByIDResponse{}
 	if err := json.Unmarshal(queryResponse.BodyBytes, employee); err != nil {
-		return nil, fmt.Errorf("Error on unmarshalling bytes to UserMetadata: %w", err)
+		return nil, fmt.Errorf("Error on unmarshalling bytes to FetchEmployeeByIDResponse: %w", err)
 	}
 
 	return employee, nil
+}
+
+func (o *Client) FetchOrgScimGroups(params models.FetchOrgScimGroupsRequest) (*models.ScimGroupResultPage, error) {
+	urlPostfix := fmt.Sprintf("scim/%s/groups", params.OrgID)
+
+	queryParams := url.Values{}
+
+	if params.PageNumber != nil {
+		queryParams.Add("page_number", strconv.Itoa(*params.PageNumber))
+	}
+	if params.PageSize != nil {
+		queryParams.Add("page_size", strconv.Itoa(*params.PageSize))
+	}
+	if params.UserID != nil {
+		queryParams.Add("user_id", params.UserID.String())
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching org SCIM groups: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching org SCIM groups: %w", err)
+	}
+
+	groups := &models.ScimGroupResultPage{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, groups); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to ScimGroupResultPage: %w", err)
+	}
+
+	return groups, nil
+}
+
+func (o *Client) FetchScimGroup(params models.FetchScimGroupRequest) (*models.ScimGroup, error) {
+	urlPostfix := fmt.Sprintf("scim/%s/groups/%s", params.OrgID, params.GroupID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching SCIM group: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching SCIM group: %w", err)
+	}
+
+	scimGroup := &models.ScimGroup{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, scimGroup); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to ScimGroup: %w", err)
+	}
+
+	return scimGroup, nil
+}
+
+func (o *Client) FetchUserOAuthTokens(userID uuid.UUID) (*models.SocialLoginTokensResponse, error) {
+	urlPostfix := fmt.Sprintf("user/%s/oauth_token", userID)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching user OAuth tokens: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching user OAuth tokens: %w", err)
+	}
+
+	tokens := &models.SocialLoginTokensResponse{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, tokens); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to SocialLoginTokensResponse: %w", err)
+	}
+
+	return tokens, nil
+}
+
+func (o *Client) FetchFreshTokenFromProvider(userID uuid.UUID, provider models.SocialLoginTokenProvider) (*models.SocialLoginToken, error) {
+	urlPostfix := fmt.Sprintf("user/%s/%s/fresh_token", userID, provider)
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error on fetching fresh user OAuth token: %w", err)
+	}
+
+	if err := o.returnErrorMessageIfNotOk(queryResponse); err != nil {
+		return nil, fmt.Errorf("Error on fetching fresh user OAuth token: %w", err)
+	}
+
+	token := &models.SocialLoginToken{}
+	if err := json.Unmarshal(queryResponse.BodyBytes, token); err != nil {
+		return nil, fmt.Errorf("Error on unmarshalling bytes to SocialLoginToken: %w", err)
+	}
+
+	return token, nil
 }
 
 // public methods around authorization
@@ -2016,7 +2134,7 @@ func (o *Client) GetUser(authHeader string) (*models.UserFromToken, error) {
 // private method to handle errors
 
 func (o *Client) returnErrorMessageIfNotOk(queryResponse *helpers.QueryResponse) error {
-	if queryResponse.StatusCode != 200 {
+	if queryResponse.StatusCode != 200 && queryResponse.StatusCode != 204 {
 		switch statusCode := queryResponse.StatusCode; statusCode {
 		case 401:
 			return fmt.Errorf("API Key is incorrect")

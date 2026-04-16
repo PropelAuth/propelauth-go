@@ -13,6 +13,7 @@ type APIKeyFull struct {
 	Metadata         map[string]interface{} `json:"metadata"`
 	UserID           uuid.UUID              `json:"user_id"`
 	OrgID            uuid.UUID              `json:"org_id"`
+	DisplayName      *string                `json:"display_name"`
 }
 
 type APIKeyResultPage struct {
@@ -77,6 +78,7 @@ type APIKeyCreateParams struct {
 	UserID           *uuid.UUID              `json:"user_id,omitempty"`
 	ExpiresAtSeconds *int                    `json:"expires_at_seconds,omitempty"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
+	DisplayName      *string                 `json:"display_name,omitempty"`
 }
 
 type APIKeyUpdateParams struct {
@@ -98,6 +100,7 @@ type APIKeyImportParams struct {
 	UserID           *uuid.UUID              `json:"user_id,omitempty"`
 	ExpiresAtSeconds *int                    `json:"expires_at_seconds,omitempty"`
 	Metadata         *map[string]interface{} `json:"metadata,omitempty"`
+	DisplayName      *string                 `json:"display_name,omitempty"`
 }
 
 type ApiKeyRateLimitError struct {
