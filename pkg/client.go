@@ -2055,8 +2055,17 @@ func (o *Client) FetchOrgScimGroups(params models.FetchOrgScimGroupsRequest) (*m
 
 func (o *Client) FetchScimGroup(params models.FetchScimGroupRequest) (*models.ScimGroup, error) {
 	urlPostfix := fmt.Sprintf("scim/%s/groups/%s", params.OrgID, params.GroupID)
+	
+	queryParams := url.Values{}
 
-	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, nil)
+	if params.MembersPageNumber != nil {
+		queryParams.Add("members_page_number", strconv.Itoa(*params.MembersPageNumber))
+	}
+	if params.MembersPageSize != nil {
+		queryParams.Add("members_page_size", strconv.Itoa(*params.MembersPageSize))
+	}
+
+	queryResponse, err := o.queryHelper.Get(o.integrationAPIKey, urlPostfix, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("Error on fetching SCIM group: %w", err)
 	}
