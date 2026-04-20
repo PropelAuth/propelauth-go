@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	models "github.com/propelauth/propelauth-go/pkg/models"
@@ -17,6 +18,7 @@ type ValidationHelperInterface interface {
 	ValidateAccessTokenAndGetUser(accessToken string, tokenVerificationMetadata models.TokenVerificationMetadata) (*models.UserFromToken, error)
 	ExtractTokenFromAuthorizationHeader(authHeader string) (string, error)
 	ConvertPEMStringToRSAPublicKey(pemString string) (*rsa.PublicKey, error)
+	IsValidIsoDate(dateStr string) bool
 }
 
 type ValidationHelper struct{}
@@ -116,4 +118,9 @@ func (o *ValidationHelper) ConvertPEMStringToRSAPublicKey(pemString string) (*rs
 	}
 
 	return nil, fmt.Errorf("Error when parsing public key: %w", err)
+}
+
+func (o *ValidationHelper) IsValidIsoDate(dateStr string) bool {
+	_, err := time.Parse(time.DateOnly, dateStr)
+	return err == nil
 }
