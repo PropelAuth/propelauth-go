@@ -24,9 +24,9 @@ type OrgCompleteMetadata struct {
 	MaxUsers                    *int                   `json:"max_users"`
 	LegacyOrgId                 *string                `json:"legacy_org_id"`
 	CustomRoleMappingName       string                 `json:"custom_role_mapping_name"`
-	PasswordRotationEnabled     *bool                  `json:"password_rotation_enabled"`
-	PasswordRotationHistorySize *int                   `json:"password_rotation_history_size"`
-	PasswordRotationPeriod      *int                   `json:"password_rotation_period"`
+	PasswordRotationEnabled     bool                  `json:"password_rotation_enabled"`
+	PasswordRotationHistorySize int                   `json:"password_rotation_history_size"`
+	PasswordRotationPeriod      int                   `json:"password_rotation_period"`
 }
 
 // OrgMetadata has the information about the organziation.
