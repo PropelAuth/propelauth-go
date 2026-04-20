@@ -11,9 +11,11 @@ type CreateMagicLinkResponse struct {
 
 // CreateMagicLinkParams is the information needed to create a magic link to sign someone in automatically.
 type CreateMagicLinkParams struct {
-	Email                         string  `json:"email"`
-	RedirectURL                   *string `json:"redirect_url,omitempty"`
-	ExpiresInHours                *int    `json:"expires_in_hours,omitempty"`
-	CreateNewUserIfOneDoesntExist *bool   `json:"create_new_user_if_one_doesnt_exist,omitempty"`
-	ExpireAfterFirstUse           *bool   `json:"expire_after_first_use,omitempty"`
+	Email                         string             `json:"email"`
+	RedirectURL                   *string            `json:"redirect_url,omitempty"`
+	ExpiresInHours                *int               `json:"expires_in_hours,omitempty"`
+	CreateNewUserIfOneDoesntExist *bool              `json:"create_new_user_if_one_doesnt_exist,omitempty"`
+	ExpireAfterFirstUse           *bool              `json:"expire_after_first_use,omitempty"`
+	RequiresInterstitial          *bool              `json:"requires_interstitial,omitempty"`
+	UserSignupQueryParameters     *map[string]string `json:"user_signup_query_parameters,omitempty"`
 }
