@@ -97,6 +97,17 @@ type ClientInterface interface {
 	ImportAPIKey(params models.APIKeyImportParams) (*models.APIKeyImportedNew, error)
 	ValidateImportedAPIKey(apiKeyToken string) (*models.APIKeyValidation, error)
 
+	// user insights endpoints
+	FetchUserTopInviterReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error)
+	FetchUserChampionReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error)
+	FetchUserChurnReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error)
+	FetchUserReengagementReport(reportInterval *string, pagination *models.ReportPagination) (*models.UserReport, error)
+	FetchOrgGrowthReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error)
+	FetchOrgAttritionReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error)
+	FetchOrgChurnReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error)
+	FetchOrgReengagementReport(reportInterval *string, pagination *models.ReportPagination) (*models.OrgReport, error)
+	FetchChartMetricData(chartMetric string, cadence *string, chartRange *models.ChartRange) (*models.ChartData, error)
+
 	// a method to validate the JWT
 	GetUser(authHeader string) (*models.UserFromToken, error)
 }
